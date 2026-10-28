@@ -449,7 +449,7 @@ export default function LoginPage() {
                         htmlFor="register-role"
                         className="block text-[13px] font-medium text-[#0A0A0A] mb-1.5"
                       >
-                        Initial Role (For Testing)
+                        Initial Role (Self-Signup)
                       </label>
                       <select
                         id="register-role"
@@ -458,17 +458,14 @@ export default function LoginPage() {
                           const r = e.target.value as UserRole;
                           setRegisterRole(r);
                           setJobTitle(
-                            r === 'manager'
-                              ? 'Refurbishment Operations Manager'
-                              : r === 'technician'
-                                ? 'Refurbishment Technician'
-                                : 'Impact Auditor'
+                            r === 'technician'
+                              ? 'Refurbishment Technician'
+                              : 'Impact Auditor'
                           );
                         }}
                         className="genesis-input w-full min-h-[44px]"
                       >
                         <option value="technician">Technician / Staff</option>
-                        <option value="manager">Manager / Admin</option>
                         <option value="viewer">Viewer / Auditor</option>
                       </select>
                     </div>

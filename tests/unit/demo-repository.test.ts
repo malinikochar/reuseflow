@@ -132,4 +132,37 @@ describe('DemoDeviceRepository Vertical Slice (Intake -> Assess -> Explain -> Ap
       expect(readyRes.data.device.workflowEvents.length).toBeGreaterThanOrEqual(6);
     }
   });
+
+  it('completes missing comparable value on Case E (FG-DEMO-105) and transitions from INSUFFICIENT_DATA to REFURBISH_CANDIDATE', async () => {
+    const repo = new DemoDeviceRepository();
+    const devices = await repo.list();
+    const caseE = devices.find((d) => d.assetTag === 'FG-DEMO-105');
+    expect(caseE).toBeDefined();
+    if (!caseE) return;
+
+    expect(caseE.status).toBe('intake');
+    expect(caseE.latestAssessment?.decision).toBe('INSUFFICIENT_DATA');
+    expect(caseE.latestAssessment?.missingFields).toContain('comparableValueCents');
+
+    const techActor = {
+      id: 'tech-1',
+      name: 'Taylor Tech',
+      role: 'technician' as const,
+    };
+
+    const updateRes = await repo.updateIntake(
+      caseE.id,
+      { comparableValueCents: 14000 },
+      techActor
+    );
+    expect(updateRes.ok).toBe(true);
+
+    const assessRes = await repo.assessDevice(caseE.id, techActor);
+    expect(assessRes.ok).toBe(true);
+    if (!assessRes.ok) return;
+
+    expect(assessRes.data.device.status).toBe('assessed');
+    expect(assessRes.data.assessment.decision).toBe('REFURBISH_CANDIDATE');
+    expect(assessRes.data.assessment.marginCents).toBe(11833); // $140.00 - $21.67 ($15 parts + $6.67 labor)
+  });
 });

@@ -18,6 +18,22 @@ test.describe('ReuseFlow End-to-End Judge Smoke Walkthrough (/ -> /demo)', () =>
     // 2. Check Fictional Sample Data banner & populated metrics
     await expect(page.getByText('Fictional Sample Data')).toBeVisible();
     await expect(page.getByText('FG-DEMO-101').first()).toBeVisible();
+    await expect(
+      page.getByText('Net Refurbishment Value Unlocked').first()
+    ).toBeVisible();
+
+    // 2b. Select Case E (FG-DEMO-105) with missing comparable value, complete intake specs, and verify reassessment
+    await page.getByText('FG-DEMO-105').first().click();
+    await expect(
+      page.getByRole('button', { name: /Complete Missing Intake Inputs/i })
+    ).toBeVisible();
+    await page.getByLabel('Comparable Value ($ USD)').fill('140.00');
+    await page
+      .getByRole('button', { name: /Save Specs & Re-run v1\.0\.0 Assessment/i })
+      .click();
+    await expect(
+      page.getByText(/Updated intake specs for FG-DEMO-105 and re-evaluated v1\.0\.0: REFURBISH_CANDIDATE/i)
+    ).toBeVisible();
 
     // 3. Click New Device Intake and create a safe viable laptop
     await page.getByRole('button', { name: /New Device Intake/i }).click();
@@ -48,6 +64,9 @@ test.describe('ReuseFlow End-to-End Judge Smoke Walkthrough (/ -> /demo)', () =>
     await page.getByRole('button', { name: /Scenario Lab/i }).click();
     await expect(
       page.getByText(/Illustrative scenario · not measured organizational performance/i).first()
+    ).toBeVisible();
+    await expect(
+      page.getByText(/Strategic Alternatives Analysis — Refurbishment Triage Operating Model/i)
     ).toBeVisible();
     await expect(page.getByText('$200.00/mo').first()).toBeVisible();
 

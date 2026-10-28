@@ -50,8 +50,20 @@ export function OperationsDashboardOverview({
     .filter((d) => d.latestAssessment?.decision === 'REFURBISH_CANDIDATE')
     .reduce((acc, d) => acc + (d.latestAssessment?.marginCents ?? 0), 0);
 
+  const candidateComparableSumCents = devices
+    .filter((d) => d.latestAssessment?.decision === 'REFURBISH_CANDIDATE')
+    .reduce((acc, d) => acc + (d.comparableValueCents ?? 0), 0);
+
+  const candidateRepairCostSumCents = devices
+    .filter((d) => d.latestAssessment?.decision === 'REFURBISH_CANDIDATE')
+    .reduce((acc, d) => acc + (d.latestAssessment?.repairCostCents ?? 0), 0);
+
+  const pendingSanitizationCount = devices.filter(
+    (d) => d.storagePresent && d.sanitizationStatus === 'pending'
+  ).length;
+
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         <MetricCard
           label="Total Devices in Queue"
@@ -77,6 +89,34 @@ export function OperationsDashboardOverview({
           subtext="Swollen battery or physical containment holds"
           accent="amber"
         />
+      </div>
+
+      {/* Queue Economic Waterfall & Governance Strip */}
+      <div className="genesis-card px-5 py-3.5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-[12px]">
+        <div className="flex items-center justify-between sm:block rounded-[6px] bg-[#FAFAFA] border border-[#E8E8EC] px-3.5 py-2">
+          <span className="text-[#6B6B6B] block">Candidate Gross Comparable Value</span>
+          <span className="font-mono font-semibold text-[14px] text-[#0A0A0A]">
+            {formatCents(candidateComparableSumCents)}
+          </span>
+        </div>
+        <div className="flex items-center justify-between sm:block rounded-[6px] bg-[#FAFAFA] border border-[#E8E8EC] px-3.5 py-2">
+          <span className="text-[#6B6B6B] block">Est. Candidate Repair Cost (Parts+Labor+OH)</span>
+          <span className="font-mono font-semibold text-[14px] text-[#0A0A0A]">
+            {formatCents(candidateRepairCostSumCents)}
+          </span>
+        </div>
+        <div className="flex items-center justify-between sm:block rounded-[6px] bg-[#10B981]/10 border border-[#10B981]/30 px-3.5 py-2">
+          <span className="text-[#065F46] block">Net Refurbishment Value Unlocked</span>
+          <span className="font-mono font-semibold text-[14px] text-[#065F46]">
+            {formatCents(positiveMarginSumCents)}
+          </span>
+        </div>
+        <div className="flex items-center justify-between sm:block rounded-[6px] bg-[#FAFAFA] border border-[#E8E8EC] px-3.5 py-2">
+          <span className="text-[#6B6B6B] block">Storage Sanitization Gate Holds</span>
+          <span className="font-mono font-semibold text-[14px] text-[#0A0A0A]">
+            {pendingSanitizationCount} pending external wipe
+          </span>
+        </div>
       </div>
 
       {/* Category & Workflow Breakdown Bar */}
@@ -598,6 +638,85 @@ export function ScenarioLab({
           </form>
         </section>
       )}
+
+      {/* Strategic Alternatives Tradeoff Matrix (FUSE Case Alignment) */}
+      <section
+        aria-label="Strategic Implementation Alternatives Comparison"
+        className="genesis-card overflow-hidden"
+      >
+        <div className="border-b border-[#E8E8EC] bg-[#FFFFFF] px-6 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+          <div>
+            <h3 className="font-display text-[16px] font-bold text-[#0A0A0A]">
+              Strategic Alternatives Analysis — Refurbishment Triage Operating Model
+            </h3>
+            <p className="text-[12px] text-[#6B6B6B]">
+              Why a lightweight, deterministic decision-support workflow outperforms both ad-hoc spreadsheets and heavy custom ERP deployments.
+            </p>
+          </div>
+          <span className="rounded-full bg-[#6366F1]/12 px-3 py-1 text-[11px] font-medium text-[#4F46E5] self-start sm:self-auto">
+            Case Alignment Matrix
+          </span>
+        </div>
+
+        <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-4 text-[13px]">
+          <div className="genesis-panel bg-[#FAFAFA] p-4 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="font-display font-bold text-[#0A0A0A]">
+                1. Status Quo / Spreadsheets
+              </span>
+              <span className="rounded-full bg-[#E8E8EC] px-2.5 py-0.5 text-[11px] font-medium text-[#6B6B6B]">
+                Baseline
+              </span>
+            </div>
+            <p className="text-[12px] text-[#6B6B6B] leading-relaxed">
+              Unstructured bench notes and subjective technician rules-of-thumb (~{scenario.baselineMinutesPerDevice} min/device).
+            </p>
+            <ul className="list-disc pl-4 space-y-1 text-[12px] text-[#6B6B6B]">
+              <li>Labor sunk into negative-margin repairs before parts math is checked.</li>
+              <li>No enforced database gate preventing un-wiped storage from reaching Ready.</li>
+              <li>Difficult to audit why a device was harvested vs. refurbished.</li>
+            </ul>
+          </div>
+
+          <div className="rounded-[8px] border-2 border-[#6366F1] bg-[#6366F1]/5 p-4 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="font-display font-bold text-[#0A0A0A]">
+                2. ReuseFlow v1.0.0 (Recommended)
+              </span>
+              <span className="rounded-full bg-[#10B981]/20 px-2.5 py-0.5 text-[11px] font-semibold text-[#065F46]">
+                Best Fit
+              </span>
+            </div>
+            <p className="text-[12px] text-[#0A0A0A] leading-relaxed">
+              Structured intake + deterministic cost/margin rules + human-approved safety & sanitization gates (~{scenario.proposedMinutesPerDevice} min target).
+            </p>
+            <ul className="list-disc pl-4 space-y-1 text-[12px] text-[#0A0A0A]">
+              <li>Immediate swollen-battery quarantine before economic calculation.</li>
+              <li>Explicit reason codes & integer-cent cost breakdown on every unit.</li>
+              <li>Low adoption friction for volunteer & staff technicians; zero AI hallucination risk.</li>
+            </ul>
+          </div>
+
+          <div className="genesis-panel bg-[#FAFAFA] p-4 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="font-display font-bold text-[#0A0A0A]">
+                3. Heavy Custom ERP / Auto-Wipe
+              </span>
+              <span className="rounded-full bg-[#F59E0B]/20 px-2.5 py-0.5 text-[11px] font-medium text-[#92400E]">
+                High Risk
+              </span>
+            </div>
+            <p className="text-[12px] text-[#6B6B6B] leading-relaxed">
+              Full warehouse ERP replacement with hardware-coupled automated imaging and e-commerce pricing feeds.
+            </p>
+            <ul className="list-disc pl-4 space-y-1 text-[12px] text-[#6B6B6B]">
+              <li>High upfront capex ($25k+) and multi-month implementation delay.</li>
+              <li>Volatile scraped resale prices introduce noisy false positives.</li>
+              <li>Over-automating disposal/wipe creates compliance and safety liability.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }

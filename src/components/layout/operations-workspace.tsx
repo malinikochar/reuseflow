@@ -27,7 +27,10 @@ import {
 } from '@/types/domain';
 import { DEFAULT_ENGINE_CONFIG } from '@/lib/decision/engine';
 import { ActorContext, DeviceRepository } from '@/lib/repositories/types';
-import { DeviceCreateInput } from '@/lib/validation/schemas';
+import {
+  DeviceCreateInput,
+  DeviceUpdateIntakeInput,
+} from '@/lib/validation/schemas';
 import { createSupabaseBrowserClient } from '@/lib/supabase/client';
 import {
   DemoModeBanner,
@@ -46,6 +49,7 @@ import {
   DeviceTable,
 } from '@/components/devices/device-table-and-filters';
 import { DeviceIntakeForm } from '@/components/devices/device-intake-form';
+import { DeviceIntakeQuickEdit } from '@/components/devices/device-intake-quick-edit';
 import { AssessmentPanel } from '@/components/assessments/assessment-panel';
 import {
   WorkflowDecisionControls,
@@ -224,6 +228,41 @@ export function OperationsWorkspace({
       } else {
         setError(res.message);
       }
+    } finally {
+      setIsBusy(false);
+    }
+  };
+
+  const handleUpdateIntakeAndReassess = async (
+    updates: DeviceUpdateIntakeInput
+  ): Promise<{ ok: boolean; message?: string }> => {
+    if (!selectedDevice) return { ok: false, message: 'No device selected.' };
+    setIsBusy(true);
+    setToastMessage(null);
+    try {
+      const updateRes = await repository.updateIntake(
+        selectedDevice.id,
+        updates,
+        activeActor
+      );
+      if (!updateRes.ok) {
+        return { ok: false, message: updateRes.message };
+      }
+
+      const assessRes = await repository.assessDevice(
+        selectedDevice.id,
+        activeActor,
+        engineConfig
+      );
+      await loadWorkspaceData(selectedDevice.id);
+      if (assessRes.ok) {
+        setToastMessage(
+          `Updated intake specs for ${selectedDevice.assetTag} and re-evaluated v1.0.0: ${assessRes.data.assessment.decision}.`
+        );
+      } else {
+        setToastMessage(`Updated intake specs for ${selectedDevice.assetTag}.`);
+      }
+      return { ok: true };
     } finally {
       setIsBusy(false);
     }
@@ -595,6 +634,13 @@ export function OperationsWorkspace({
                         Record ID: <code className="font-mono">{selectedDevice.id}</code>
                       </span>
                     </div>
+
+                    <DeviceIntakeQuickEdit
+                      device={selectedDevice}
+                      actorRole={activeActor.role}
+                      isBusy={isBusy}
+                      onSaveAndReassess={handleUpdateIntakeAndReassess}
+                    />
 
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
                       <div className="lg:col-span-7 space-y-6">

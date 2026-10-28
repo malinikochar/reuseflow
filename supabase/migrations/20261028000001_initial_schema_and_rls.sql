@@ -272,9 +272,14 @@ begin
     nullif(trim(new.raw_user_meta_data->>'job_title'), ''),
     'Refurbishment Specialist'
   );
+  -- Security control: public self-signup can never self-elevate to 'manager'.
+  -- Only 'technician' or 'viewer' may be requested at signup; promotion to 'manager'
+  -- requires an existing manager invoking public.admin_update_user_profile().
   v_req_role := lower(coalesce(new.raw_user_meta_data->>'role', 'technician'));
-  if v_req_role in ('manager', 'technician', 'viewer') then
+  if v_req_role in ('technician', 'viewer') then
     v_role := v_req_role::public.user_role;
+  else
+    v_role := 'technician'::public.user_role;
   end if;
 
   insert into public.profiles (id, email, display_name, department, job_title, role)

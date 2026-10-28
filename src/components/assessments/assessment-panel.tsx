@@ -510,6 +510,46 @@ export function AssessmentPanel({
             )}
           </div>
         )}
+
+        {/* Shop-Floor Bench Traveler Verification Checklist (Visible on screen & optimized for Print Sheet) */}
+        <div className="genesis-panel bg-[#FAFAFA] p-4 border-t border-[#E8E8EC] space-y-3">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <span className="text-[11px] font-medium uppercase tracking-wider text-[#0A0A0A]">
+              Shop-Floor Bench Traveler — Non-PII Verification & Sign-Off
+            </span>
+            <span className="font-mono text-[11px] text-[#6B6B6B]">
+              Asset: {device.assetTag} · Status: {device.status.toUpperCase()}
+            </span>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-[12px]">
+            <div className="rounded-[6px] bg-[#FFFFFF] border border-[#E8E8EC] px-3 py-2">
+              <span className="block text-[11px] text-[#6B6B6B]">1. Physical Battery Check</span>
+              <span className="font-medium text-[#0A0A0A]">
+                {device.batterySafety === 'swollen'
+                  ? 'HOLD — Swollen Battery Containment'
+                  : `Cleared (${device.batterySafety.replace('_', ' ')})`}
+              </span>
+            </div>
+            <div className="rounded-[6px] bg-[#FFFFFF] border border-[#E8E8EC] px-3 py-2">
+              <span className="block text-[11px] text-[#6B6B6B]">2. External Wipe Reference</span>
+              <span className="font-medium text-[#0A0A0A]">
+                {!device.storagePresent
+                  ? 'N/A (No Storage Media)'
+                  : device.sanitizationStatus === 'verified'
+                    ? `Verified (${device.sanitizationNote || 'External wipe logged'})`
+                    : 'PENDING EXTERNAL VERIFICATION'}
+              </span>
+            </div>
+            <div className="rounded-[6px] bg-[#FFFFFF] border border-[#E8E8EC] px-3 py-2">
+              <span className="block text-[11px] text-[#6B6B6B]">3. Human Supervisor Disposition</span>
+              <span className="font-medium text-[#0A0A0A] capitalize">
+                {device.disposition
+                  ? `${device.disposition.replace('_', ' ')} (${device.status})`
+                  : `Pending Approval (${device.status})`}
+              </span>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
   );

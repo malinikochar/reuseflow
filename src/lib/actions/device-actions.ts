@@ -147,7 +147,13 @@ function mapDbDevice(row: DbDeviceRow): Device {
     status: row.status,
     disposition: row.disposition,
     dispositionNote: row.disposition_note,
-    latestAssessment: assessments[0] ?? null,
+    latestAssessment: assessments[0]
+      ? {
+          ...assessments[0],
+          sanitizationGateOpen:
+            !row.storage_present || row.sanitization_status === 'verified',
+        }
+      : null,
     assessments,
     workflowEvents,
     createdBy: row.created_by,
@@ -439,6 +445,14 @@ export async function updateDeviceIntakeServerAction(
   }
 
   const updates = parsed.data;
+  const updatedStoragePresent = updates.storagePresent ?? existing.storagePresent;
+  let updatedSanitization = existing.sanitizationStatus;
+  if (updatedStoragePresent && existing.sanitizationStatus === 'not_applicable') {
+    updatedSanitization = 'pending';
+  } else if (!updatedStoragePresent) {
+    updatedSanitization = 'not_applicable';
+  }
+
   const { error } = await supabase
     .from('devices')
     .update({
@@ -450,7 +464,7 @@ export async function updateDeviceIntakeServerAction(
       boots: updates.boots !== undefined ? updates.boots : existing.boots,
       condition: updates.condition ?? existing.condition,
       battery_safety: updates.batterySafety ?? existing.batterySafety,
-      storage_present: updates.storagePresent ?? existing.storagePresent,
+      storage_present: updatedStoragePresent,
       repairable: updates.repairable !== undefined ? updates.repairable : existing.repairable,
       charger_included:
         updates.chargerIncluded !== undefined
@@ -468,6 +482,7 @@ export async function updateDeviceIntakeServerAction(
         updates.comparableValueCents !== undefined
           ? updates.comparableValueCents
           : existing.comparableValueCents,
+      sanitization_status: updatedSanitization,
       updated_at: new Date().toISOString(),
     })
     .eq('id', id);
@@ -547,6 +562,37 @@ export async function assessDeviceServerAction(
 
   if (error) {
     return { ok: false, code: 'INTERNAL', message: 'Could not save assessment snapshot.' };
+  }
+
+  let nextStatus: WorkflowStatus = existing.status;
+  let statusNote: string | null = null;
+
+  if (evalResult.decision === 'QUARANTINE' && existing.status !== 'quarantined') {
+    nextStatus = 'quarantined';
+    statusNote = 'Safety quarantine triggered during assessment (swollen battery).';
+  } else if (existing.status === 'intake' && evalResult.decision !== 'INSUFFICIENT_DATA') {
+    nextStatus = 'assessed';
+    statusNote = `Re-assessed with rule v${evalResult.ruleVersion}: ${evalResult.decision}.`;
+  }
+
+  if (nextStatus !== existing.status && statusNote) {
+    await supabase
+      .from('devices')
+      .update({
+        status: nextStatus,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', existing.id);
+
+    await supabase.from('workflow_events').insert({
+      device_id: existing.id,
+      from_status: existing.status,
+      to_status: nextStatus,
+      actor_id: auth.actor.id,
+      actor_name: auth.actor.name,
+      actor_role: auth.actor.role,
+      note: statusNote,
+    });
   }
 
   const reloaded = await getDeviceServerAction(id);
