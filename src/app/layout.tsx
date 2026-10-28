@@ -19,7 +19,7 @@ const jetbrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
   title: 'ReuseFlow — Smart Refurbishment Decision Engine',
   description:
-    'Turn donated electronics into transparent, human-approved refurbishment decisions and measurable operational outcomes. Styled with Genesis (designmd.ai/chef/genesis).',
+    'Turn donated electronics into transparent, human-approved refurbishment decisions and measurable operational outcomes.',
 };
 
 export default function RootLayout({
