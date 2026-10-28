@@ -624,7 +624,7 @@ export function AdminGovernancePanel({
             <Database className="h-4 w-4 text-[#10B981]" aria-hidden="true" />
           </div>
           <div className="font-display text-[28px] font-bold text-[#0A0A0A]">
-            {overview?.counts.devices ?? devices.length}
+            {devices.length}
           </div>
           <div className="text-[11px] font-mono text-[#6B6B6B]">public.devices</div>
         </div>
@@ -635,7 +635,7 @@ export function AdminGovernancePanel({
             <ShieldCheck className="h-4 w-4 text-[#6366F1]" aria-hidden="true" />
           </div>
           <div className="font-display text-[28px] font-bold text-[#0A0A0A]">
-            {overview?.counts.assessments ?? 0}
+            {devices.reduce((acc, d) => acc + d.assessments.length, 0)}
           </div>
           <div className="text-[11px] font-mono text-[#6B6B6B]">
             Append-Only Snapshots
@@ -648,7 +648,7 @@ export function AdminGovernancePanel({
             <KeyRound className="h-4 w-4 text-[#F59E0B]" aria-hidden="true" />
           </div>
           <div className="font-display text-[28px] font-bold text-[#0A0A0A]">
-            {overview?.counts.workflowEvents ?? 0}
+            {devices.reduce((acc, d) => acc + d.workflowEvents.length, 0)}
           </div>
           <div className="text-[11px] font-mono text-[#6B6B6B]">
             Immutable Audit Log

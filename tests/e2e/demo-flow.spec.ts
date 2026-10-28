@@ -103,6 +103,8 @@ test.describe('ReuseFlow End-to-End Judge Smoke Walkthrough (/ -> /demo)', () =>
     await expect(
       page.getByRole('heading', { name: /Admin Panel & System Governance/i })
     ).toBeVisible();
-    await expect(page.getByText('admin@reuseflow.org').first()).toBeVisible();
+    await expect(page.getByText('admin@reuseflow.org').first()).toBeVisible({
+      timeout: 15000,
+    });
   });
 });

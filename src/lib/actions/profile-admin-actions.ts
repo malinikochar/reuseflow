@@ -198,40 +198,36 @@ export async function getAdminSystemOverviewServerAction(): Promise<
     };
   }
 
-  const [profilesRes, devicesCountRes, assessmentsCountRes, eventsCountRes] =
-    await Promise.all([
-      supabase
-        .from('profiles')
-        .select('id, email, display_name, department, job_title, role, created_at, updated_at')
-        .order('created_at', { ascending: true }),
-      supabase.from('devices').select('id', { count: 'exact', head: true }),
-      supabase.from('assessments').select('id', { count: 'exact', head: true }),
-      supabase.from('workflow_events').select('id', { count: 'exact', head: true }),
-    ]);
+  const [profilesRes, emailRes] = await Promise.all([
+    supabase
+      .from('profiles')
+      .select('id, email, display_name, department, job_title, role, created_at, updated_at')
+      .order('created_at', { ascending: true }),
+    auth.actor.role === 'manager'
+      ? supabase
+          .from('email_events')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(25)
+      : Promise.resolve({ data: [] }),
+  ]);
 
   const profiles = ((profilesRes.data as unknown as DbProfileRow[]) ?? []).map((p) =>
     mapProfileRow(p)
   );
 
-  let emailEvents: EmailEventRecord[] = [];
-  if (auth.actor.role === 'manager') {
-    const emailRes = await supabase
-      .from('email_events')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .limit(25);
-
-    emailEvents = ((emailRes.data as unknown as DbEmailEventRow[]) ?? []).map((e) => ({
-      id: e.id,
-      type: e.type,
-      recipient: e.recipient,
-      providerId: e.provider_id,
-      idempotencyKey: e.idempotency_key,
-      status: e.status,
-      sentBy: e.sent_by,
-      createdAt: e.created_at,
-    }));
-  }
+  const emailEvents: EmailEventRecord[] = (
+    (emailRes.data as unknown as DbEmailEventRow[]) ?? []
+  ).map((e) => ({
+    id: e.id,
+    type: e.type,
+    recipient: e.recipient,
+    providerId: e.provider_id,
+    idempotencyKey: e.idempotency_key,
+    status: e.status,
+    sentBy: e.sent_by,
+    createdAt: e.created_at,
+  }));
 
   return {
     ok: true,
@@ -240,9 +236,9 @@ export async function getAdminSystemOverviewServerAction(): Promise<
       emailEvents,
       counts: {
         users: profiles.length,
-        devices: devicesCountRes.count ?? 0,
-        assessments: assessmentsCountRes.count ?? 0,
-        workflowEvents: eventsCountRes.count ?? 0,
+        devices: 0,
+        assessments: 0,
+        workflowEvents: 0,
         emailEvents: emailEvents.length,
       },
     },
