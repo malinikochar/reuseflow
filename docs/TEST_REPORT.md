@@ -11,7 +11,7 @@
 | `npm run lint` | ESLint (`next/core-web-vitals`, `next/typescript` across `src/` and `tests/`) | **PASS** (0 warnings, 0 errors) |
 | `npm run test` | Vitest unit & integration suites (`6 test files`, `27 tests`) | **PASS** (27/27 passed) |
 | `npm run build` | Next.js production build (`next build`, 11 static/dynamic routes + middleware) | **PASS** (0 build errors) |
-| `npx playwright test` | End-to-end Chromium smoke flow (`/` -> `/demo` intake -> assess -> approve -> Scenario Lab -> reset + 375px mobile overflow check) | **PASS** (2/2 passed) |
+| `npx playwright test` | End-to-end Chromium smoke flow (`/` -> `/demo` intake -> assess -> approve -> Scenario Lab -> reset + 375px mobile overflow check) | **PASS** (2/2 passed locally & against live `https://reuseflow.vercel.app`) |
 
 ---
 

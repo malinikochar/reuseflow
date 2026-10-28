@@ -3,6 +3,10 @@
 **FUSE Society Blueprint 2026 Hackathon MVP**  
 *Turn donated electronics into transparent, human-approved refurbishment decisions and measurable operational outcomes.*
 
+- **Live Production URL:** [https://reuseflow.vercel.app](https://reuseflow.vercel.app)
+- **Public Judge Sandbox (Zero Login):** [https://reuseflow.vercel.app/demo](https://reuseflow.vercel.app/demo)
+- **GitHub Repository:** [https://github.com/ensuredesign/reuseflow](https://github.com/ensuredesign/reuseflow)
+
 > **Important Scope & Honesty Disclosure:** ReuseFlow is a working hackathon prototype for a *proposed* internal electronics refurbishment triage workflow. It is **not** an official or endorsed operational system of Free Geek, does **not** perform certified data wiping or automated device disposal, and all sample data in `/demo` are 100% synthetic with zero personal donor/recipient information or real serial numbers. Case-specific alignment in [`docs/CASE_ALIGNMENT.md`](docs/CASE_ALIGNMENT.md) must be validated by an eligible participant against the restricted competitor packet before final presentation recording.
 
 ---
