@@ -52,16 +52,16 @@ export default function LandingPage() {
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             <Link
               href="/login"
-              className="genesis-btn-secondary inline-flex items-center px-3.5 py-2 text-[13px]"
+              className="genesis-btn-secondary inline-flex items-center px-3.5 py-2 min-h-[40px] text-[13px]"
             >
-              Staff Sign In (/app)
+              One-Click Login (/app)
             </Link>
             <Link
               href="/demo"
-              className="genesis-btn-primary inline-flex items-center gap-1.5 px-4 py-2 text-[13px]"
+              className="genesis-btn-primary inline-flex items-center gap-1.5 px-4 py-2 min-h-[40px] text-[13px]"
             >
               Try Interactive Demo
               <ArrowRight className="h-4 w-4" aria-hidden="true" />
@@ -91,17 +91,17 @@ export default function LandingPage() {
               <div className="flex flex-wrap items-center gap-3 pt-1">
                 <Link
                   href="/demo"
-                  className="genesis-btn-primary inline-flex items-center gap-2 px-6 py-3 text-[15px]"
+                  className="genesis-btn-primary min-h-[44px] inline-flex items-center gap-2 px-6 py-3 text-[15px]"
                 >
                   Try Interactive Demo (/demo)
                   <ArrowRight className="h-4 w-4" aria-hidden="true" />
                 </Link>
                 <Link
-                  href="/app"
-                  className="genesis-btn-secondary bg-[#FFFFFF] inline-flex items-center gap-2 px-5 py-3 text-[15px]"
+                  href="/login"
+                  className="genesis-btn-secondary bg-[#FFFFFF] min-h-[44px] inline-flex items-center gap-2 px-5 py-3 text-[15px]"
                 >
-                  <Lock className="h-4 w-4 text-[#6B6B6B]" aria-hidden="true" />
-                  Authenticated Staff App (/app)
+                  <Lock className="h-4 w-4 text-[#6366F1]" aria-hidden="true" />
+                  One-Click Admin & Staff Login (/app)
                 </Link>
               </div>
 

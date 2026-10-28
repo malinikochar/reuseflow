@@ -71,5 +71,38 @@ test.describe('ReuseFlow End-to-End Judge Smoke Walkthrough (/ -> /demo)', () =>
       return document.documentElement.scrollWidth > document.documentElement.clientWidth;
     });
     expect(overflow).toBe(false);
+
+    await page.goto('/login');
+    await expect(page.getByText('One-Click Demo Login (/app)')).toBeVisible();
+    const loginOverflow = await page.evaluate(() => {
+      return document.documentElement.scrollWidth > document.documentElement.clientWidth;
+    });
+    expect(loginOverflow).toBe(false);
+  });
+
+  test('completes One-Click Admin Login into live Supabase /app, My Profile, and Admin Panel', async ({
+    page,
+  }) => {
+    await page.goto('/login');
+    await expect(page.getByText('One-Click Demo Login (/app)')).toBeVisible();
+
+    await page.getByRole('button', { name: /Login as Admin/i }).click();
+    await expect(page).toHaveURL(/\/app/, { timeout: 15000 });
+
+    // Verify seeded Supabase devices loaded
+    await expect(page.getByText('FG-DEMO-101').first()).toBeVisible({ timeout: 15000 });
+
+    // Open My Profile tab
+    await page.getByRole('button', { name: /My Profile/i }).click();
+    await expect(
+      page.getByRole('heading', { name: /Staff Profile & RBAC Permissions/i })
+    ).toBeVisible();
+
+    // Open Admin Panel tab
+    await page.getByRole('button', { name: /Admin Panel/i }).click();
+    await expect(
+      page.getByRole('heading', { name: /Admin Panel & System Governance/i })
+    ).toBeVisible();
+    await expect(page.getByText('admin@reuseflow.org').first()).toBeVisible();
   });
 });

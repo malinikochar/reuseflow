@@ -38,9 +38,11 @@ export async function POST(request: Request) {
     const sendRes = await sendOperationalSummaryServerOnly(body, {
       actor: auth.actor,
       resendApiKey: process.env.RESEND_API_KEY,
-      fromEmail: process.env.RESEND_FROM_EMAIL,
-      allowlistCsv: process.env.REPORT_RECIPIENT_ALLOWLIST,
-      siteUrl: process.env.NEXT_PUBLIC_SITE_URL,
+      fromEmail: process.env.RESEND_FROM_EMAIL || 'ReuseFlow <info@ensure.in>',
+      allowlistCsv:
+        process.env.REPORT_RECIPIENT_ALLOWLIST ||
+        'info@ensure.in,admin@reuseflow.org,ops-manager@example.org',
+      siteUrl: process.env.NEXT_PUBLIC_SITE_URL || 'https://reuseflow.vercel.app',
       devices,
     });
 

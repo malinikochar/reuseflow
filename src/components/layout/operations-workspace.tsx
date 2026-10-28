@@ -2,15 +2,19 @@
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   Calculator,
   CheckCircle2,
   ClipboardList,
   Cpu,
   Lock,
+  LogOut,
   PlusCircle,
   ShieldCheck,
+  SlidersHorizontal,
   UserCheck,
+  UserCog,
 } from 'lucide-react';
 import {
   Device,
@@ -24,6 +28,7 @@ import {
 import { DEFAULT_ENGINE_CONFIG } from '@/lib/decision/engine';
 import { ActorContext, DeviceRepository } from '@/lib/repositories/types';
 import { DeviceCreateInput } from '@/lib/validation/schemas';
+import { createSupabaseBrowserClient } from '@/lib/supabase/client';
 import {
   DemoModeBanner,
   ErrorState,
@@ -46,9 +51,13 @@ import {
   WorkflowDecisionControls,
   WorkflowTimeline,
 } from '@/components/devices/workflow-timeline-and-dialogs';
+import {
+  AdminGovernancePanel,
+  UserProfilePanel,
+} from '@/components/profile/profile-and-admin-panel';
 import { cn } from '@/lib/utils';
 
-type WorkspaceTab = 'inventory' | 'intake' | 'scenario';
+type WorkspaceTab = 'inventory' | 'intake' | 'scenario' | 'profile' | 'admin';
 
 const DEMO_ACTORS: Record<UserRole, ActorContext> = {
   manager: {
@@ -79,9 +88,23 @@ export function OperationsWorkspace({
   fixedActor?: ActorContext;
   onResetDemo?: () => Promise<Device[]>;
 }) {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<WorkspaceTab>('inventory');
   const [demoRole, setDemoRole] = useState<UserRole>('manager');
-  const activeActor: ActorContext = fixedActor ?? DEMO_ACTORS[demoRole];
+  const [customActorName, setCustomActorName] = useState<string | null>(null);
+  const baseActor: ActorContext = fixedActor ?? DEMO_ACTORS[demoRole];
+  const activeActor: ActorContext = customActorName
+    ? { ...baseActor, name: customActorName }
+    : baseActor;
+
+  const handleSignOut = async () => {
+    const supabase = createSupabaseBrowserClient();
+    if (supabase) {
+      await supabase.auth.signOut();
+    }
+    router.push('/login');
+    router.refresh();
+  };
 
   const [allDevices, setAllDevices] = useState<Device[]>([]);
   const [filteredDevices, setFilteredDevices] = useState<Device[]>([]);
@@ -316,19 +339,19 @@ export function OperationsWorkspace({
           <div className="flex flex-wrap items-center justify-between lg:justify-end gap-2 sm:gap-3">
             <nav
               aria-label="Workspace Views"
-              className="flex items-center gap-1.5"
+              className="flex items-center gap-1.5 overflow-x-auto max-w-full pb-1 sm:pb-0"
             >
               <button
                 type="button"
                 onClick={() => setActiveTab('inventory')}
                 className={cn(
-                  'inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[12px] font-medium transition-colors cursor-pointer',
+                  'inline-flex items-center gap-1.5 rounded-full px-3.5 py-2 min-h-[38px] text-[12px] font-medium whitespace-nowrap transition-colors cursor-pointer',
                   activeTab === 'inventory'
                     ? 'bg-[#6366F1] text-[#FAFAFA]'
                     : 'bg-[#F4F4F6] text-[#6B6B6B] hover:text-[#0A0A0A]'
                 )}
               >
-                <ClipboardList className="h-3.5 w-3.5" aria-hidden="true" />
+                <ClipboardList className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
                 Inventory & Triage ({allDevices.length})
               </button>
 
@@ -336,13 +359,13 @@ export function OperationsWorkspace({
                 type="button"
                 onClick={() => setActiveTab('intake')}
                 className={cn(
-                  'inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[12px] font-medium transition-colors cursor-pointer',
+                  'inline-flex items-center gap-1.5 rounded-full px-3.5 py-2 min-h-[38px] text-[12px] font-medium whitespace-nowrap transition-colors cursor-pointer',
                   activeTab === 'intake'
                     ? 'bg-[#6366F1] text-[#FAFAFA]'
                     : 'bg-[#F4F4F6] text-[#6B6B6B] hover:text-[#0A0A0A]'
                 )}
               >
-                <PlusCircle className="h-3.5 w-3.5" aria-hidden="true" />
+                <PlusCircle className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
                 New Device
               </button>
 
@@ -350,19 +373,47 @@ export function OperationsWorkspace({
                 type="button"
                 onClick={() => setActiveTab('scenario')}
                 className={cn(
-                  'inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[12px] font-medium transition-colors cursor-pointer',
+                  'inline-flex items-center gap-1.5 rounded-full px-3.5 py-2 min-h-[38px] text-[12px] font-medium whitespace-nowrap transition-colors cursor-pointer',
                   activeTab === 'scenario'
                     ? 'bg-[#6366F1] text-[#FAFAFA]'
                     : 'bg-[#F4F4F6] text-[#6B6B6B] hover:text-[#0A0A0A]'
                 )}
               >
-                <Calculator className="h-3.5 w-3.5" aria-hidden="true" />
+                <Calculator className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
                 Scenario Lab
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveTab('profile')}
+                className={cn(
+                  'inline-flex items-center gap-1.5 rounded-full px-3.5 py-2 min-h-[38px] text-[12px] font-medium whitespace-nowrap transition-colors cursor-pointer',
+                  activeTab === 'profile'
+                    ? 'bg-[#6366F1] text-[#FAFAFA]'
+                    : 'bg-[#F4F4F6] text-[#6B6B6B] hover:text-[#0A0A0A]'
+                )}
+              >
+                <UserCog className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                My Profile
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveTab('admin')}
+                className={cn(
+                  'inline-flex items-center gap-1.5 rounded-full px-3.5 py-2 min-h-[38px] text-[12px] font-medium whitespace-nowrap transition-colors cursor-pointer',
+                  activeTab === 'admin'
+                    ? 'bg-[#6366F1] text-[#FAFAFA]'
+                    : 'bg-[#F4F4F6] text-[#6B6B6B] hover:text-[#0A0A0A]'
+                )}
+              >
+                <SlidersHorizontal className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                Admin Panel
               </button>
             </nav>
 
             {isDemo ? (
-              <div className="flex items-center gap-1.5 rounded-[6px] border border-[#E8E8EC] bg-[#FAFAFA] px-3 py-1.5 text-[12px]">
+              <div className="flex items-center gap-1.5 rounded-[6px] border border-[#E8E8EC] bg-[#FAFAFA] px-3 py-1.5 min-h-[38px] text-[12px]">
                 <UserCheck className="h-3.5 w-3.5 text-[#6B6B6B] shrink-0" aria-hidden="true" />
                 <label htmlFor="demo-role-select" className="text-[#6B6B6B] font-medium">
                   Simulate Role:
@@ -379,12 +430,29 @@ export function OperationsWorkspace({
                 </select>
               </div>
             ) : (
-              <div className="flex items-center gap-2 rounded-[6px] border border-[#E8E8EC] bg-[#FAFAFA] px-3 py-1.5 text-[12px]">
-                <Lock className="h-3.5 w-3.5 text-[#6B6B6B]" aria-hidden="true" />
-                <span className="font-medium text-[#0A0A0A]">{activeActor.name}</span>
-                <span className="rounded-full bg-[#F4F4F6] px-2 py-0.5 text-[11px] uppercase text-[#6B6B6B]">
-                  {activeActor.role}
-                </span>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('profile')}
+                  className="flex items-center gap-2 rounded-[6px] border border-[#E8E8EC] bg-[#FAFAFA] hover:bg-[#F4F4F6] px-3 py-1.5 min-h-[38px] text-[12px] transition-colors cursor-pointer"
+                >
+                  <Lock className="h-3.5 w-3.5 text-[#6366F1]" aria-hidden="true" />
+                  <span className="font-medium text-[#0A0A0A] truncate max-w-[160px]">
+                    {activeActor.name}
+                  </span>
+                  <span className="rounded-full bg-[#6366F1]/15 px-2 py-0.5 text-[11px] font-medium uppercase text-[#4F46E5]">
+                    {activeActor.role}
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void handleSignOut()}
+                  aria-label="Sign out of workspace"
+                  className="genesis-btn-secondary inline-flex items-center gap-1.5 px-3 py-1.5 min-h-[38px] text-[12px] cursor-pointer"
+                >
+                  <LogOut className="h-3.5 w-3.5 text-[#6B6B6B]" aria-hidden="true" />
+                  Sign Out
+                </button>
               </div>
             )}
           </div>
@@ -581,6 +649,27 @@ export function OperationsWorkspace({
                   actorRole={activeActor.role}
                 />
               </div>
+            )}
+
+            {/* TAB 4: Staff Profile & RBAC Permissions */}
+            {activeTab === 'profile' && (
+              <UserProfilePanel
+                actor={activeActor}
+                isDemo={isDemo}
+                onActorNameUpdated={(newName) => {
+                  setCustomActorName(newName);
+                  setToastMessage(`Updated display name to '${newName}'.`);
+                }}
+              />
+            )}
+
+            {/* TAB 5: Admin Panel & System Governance */}
+            {activeTab === 'admin' && (
+              <AdminGovernancePanel
+                actor={activeActor}
+                isDemo={isDemo}
+                devices={allDevices}
+              />
             )}
           </>
         )}

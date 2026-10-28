@@ -58,11 +58,18 @@ exception when duplicate_object then null; end $$;
 -- 2.1 profiles (1:1 with auth.users; role cannot be self-promoted by client)
 create table if not exists public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
+  email text,
   display_name text not null check (char_length(trim(display_name)) >= 2),
-  role public.user_role not null default 'viewer',
+  department text not null default 'Refurbishment Operations',
+  job_title text not null default 'Operations Specialist',
+  role public.user_role not null default 'technician',
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+alter table public.profiles add column if not exists email text;
+alter table public.profiles add column if not exists department text not null default 'Refurbishment Operations';
+alter table public.profiles add column if not exists job_title text not null default 'Operations Specialist';
 
 -- 2.2 devices
 create table if not exists public.devices (
@@ -201,7 +208,9 @@ security definer
 set search_path = public, pg_temp
 as $$
 begin
-  if new.role is distinct from old.role and current_setting('role', true) = 'authenticated' then
+  if new.role is distinct from old.role
+     and current_setting('role', true) = 'authenticated'
+     and coalesce(current_setting('app.allow_role_change', true), '') <> 'true' then
     raise exception 'FORBIDDEN: Users cannot modify their own role.';
   end if;
   new.updated_at := now();
@@ -214,12 +223,133 @@ create trigger trg_prevent_role_self_promotion
 before update on public.profiles
 for each row execute function public.prevent_role_self_promotion();
 
+-- 5b. Automatic Auth User Confirmation & Profile Provisioning Triggers
+create or replace function public.auto_confirm_new_auth_user()
+returns trigger
+language plpgsql
+security definer
+set search_path = public, auth, pg_temp
+as $$
+begin
+  if new.email_confirmed_at is null then
+    new.email_confirmed_at := now();
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists trg_auto_confirm_new_auth_user on auth.users;
+create trigger trg_auto_confirm_new_auth_user
+before insert on auth.users
+for each row execute function public.auto_confirm_new_auth_user();
+
+create or replace function public.handle_new_auth_user()
+returns trigger
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  v_display_name text;
+  v_department text;
+  v_job_title text;
+  v_req_role text;
+  v_role public.user_role := 'technician';
+begin
+  v_display_name := coalesce(
+    nullif(trim(new.raw_user_meta_data->>'display_name'), ''),
+    split_part(coalesce(new.email, 'Staff Member'), '@', 1)
+  );
+  if char_length(v_display_name) < 2 then
+    v_display_name := 'Operations Staff';
+  end if;
+
+  v_department := coalesce(
+    nullif(trim(new.raw_user_meta_data->>'department'), ''),
+    'Refurbishment Operations'
+  );
+  v_job_title := coalesce(
+    nullif(trim(new.raw_user_meta_data->>'job_title'), ''),
+    'Refurbishment Specialist'
+  );
+  v_req_role := lower(coalesce(new.raw_user_meta_data->>'role', 'technician'));
+  if v_req_role in ('manager', 'technician', 'viewer') then
+    v_role := v_req_role::public.user_role;
+  end if;
+
+  insert into public.profiles (id, email, display_name, department, job_title, role)
+  values (new.id, new.email, v_display_name, v_department, v_job_title, v_role)
+  on conflict (id) do update
+  set
+    email = excluded.email,
+    display_name = coalesce(nullif(public.profiles.display_name, ''), excluded.display_name),
+    updated_at = now();
+
+  return new;
+end;
+$$;
+
+drop trigger if exists trg_on_auth_user_created on auth.users;
+create trigger trg_on_auth_user_created
+after insert on auth.users
+for each row execute function public.handle_new_auth_user();
+
+-- 5c. Admin Role & Profile Governance RPC (Manager Only)
+create or replace function public.admin_update_user_profile(
+  p_target_user_id uuid,
+  p_new_role public.user_role,
+  p_display_name text default null,
+  p_department text default null,
+  p_job_title text default null
+)
+returns public.profiles
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  v_actor_role public.user_role := public.current_user_role();
+  v_updated public.profiles%rowtype;
+begin
+  if v_actor_role is distinct from 'manager' then
+    raise exception 'FORBIDDEN: Only a Refurbishment Manager / Admin can manage staff roles.';
+  end if;
+
+  perform set_config('app.allow_role_change', 'true', true);
+
+  update public.profiles
+  set
+    role = p_new_role,
+    display_name = coalesce(nullif(trim(p_display_name), ''), display_name),
+    department = coalesce(nullif(trim(p_department), ''), department),
+    job_title = coalesce(nullif(trim(p_job_title), ''), job_title),
+    updated_at = now()
+  where id = p_target_user_id
+  returning * into v_updated;
+
+  if not found then
+    raise exception 'VALIDATION: Target user profile not found.';
+  end if;
+
+  return v_updated;
+end;
+$$;
+
+revoke all on function public.admin_update_user_profile(uuid, public.user_role, text, text, text) from public, anon;
+grant execute on function public.admin_update_user_profile(uuid, public.user_role, text, text, text) to authenticated;
+
 -- 6. Prevent Mutation/Deletion of Append-Only Tables (assessments, workflow_events)
 create or replace function public.prevent_append_only_mutation()
 returns trigger
 language plpgsql
 as $$
 begin
+  if coalesce(current_setting('app.allow_seed_reset', true), '') = 'true' then
+    if tg_op = 'DELETE' then
+      return old;
+    end if;
+    return new;
+  end if;
   raise exception 'FORBIDDEN: Table % is append-only and immutable.', tg_table_name;
 end;
 $$;
@@ -335,7 +465,7 @@ revoke all on public.workflow_events from anon;
 revoke all on public.assumption_settings from anon;
 revoke all on public.email_events from anon;
 
-grant select, update (display_name) on public.profiles to authenticated;
+grant select, update (display_name, department, job_title) on public.profiles to authenticated;
 grant select, insert, update on public.devices to authenticated;
 grant select, insert on public.assessments to authenticated;
 grant select, insert on public.workflow_events to authenticated;
@@ -350,11 +480,13 @@ alter table public.assumption_settings enable row level security;
 alter table public.email_events enable row level security;
 
 -- 8.1 profiles policies
+drop policy if exists "profiles_select_authenticated" on public.profiles;
 create policy "profiles_select_authenticated"
   on public.profiles for select
   to authenticated
   using (public.current_user_role() in ('viewer', 'technician', 'manager'));
 
+drop policy if exists "profiles_update_own_display_name" on public.profiles;
 create policy "profiles_update_own_display_name"
   on public.profiles for update
   to authenticated
@@ -362,11 +494,13 @@ create policy "profiles_update_own_display_name"
   with check (id = auth.uid() and role = public.current_user_role());
 
 -- 8.2 devices policies
+drop policy if exists "devices_select_staff" on public.devices;
 create policy "devices_select_staff"
   on public.devices for select
   to authenticated
   using (public.current_user_role() in ('viewer', 'technician', 'manager'));
 
+drop policy if exists "devices_insert_tech_or_manager" on public.devices;
 create policy "devices_insert_tech_or_manager"
   on public.devices for insert
   to authenticated
@@ -376,6 +510,7 @@ create policy "devices_insert_tech_or_manager"
     and status in ('intake', 'assessed', 'quarantined')
   );
 
+drop policy if exists "devices_update_technician_intake_only" on public.devices;
 create policy "devices_update_technician_intake_only"
   on public.devices for update
   to authenticated
@@ -388,6 +523,7 @@ create policy "devices_update_technician_intake_only"
     and status in ('intake', 'assessed', 'quarantined')
   );
 
+drop policy if exists "devices_update_manager_all" on public.devices;
 create policy "devices_update_manager_all"
   on public.devices for update
   to authenticated
@@ -395,11 +531,13 @@ create policy "devices_update_manager_all"
   with check (public.current_user_role() = 'manager');
 
 -- 8.3 assessments policies (Append-only: SELECT + INSERT only)
+drop policy if exists "assessments_select_staff" on public.assessments;
 create policy "assessments_select_staff"
   on public.assessments for select
   to authenticated
   using (public.current_user_role() in ('viewer', 'technician', 'manager'));
 
+drop policy if exists "assessments_insert_tech_or_manager" on public.assessments;
 create policy "assessments_insert_tech_or_manager"
   on public.assessments for insert
   to authenticated
@@ -409,11 +547,13 @@ create policy "assessments_insert_tech_or_manager"
   );
 
 -- 8.4 workflow_events policies (Append-only: SELECT + INSERT only)
+drop policy if exists "workflow_events_select_staff" on public.workflow_events;
 create policy "workflow_events_select_staff"
   on public.workflow_events for select
   to authenticated
   using (public.current_user_role() in ('viewer', 'technician', 'manager'));
 
+drop policy if exists "workflow_events_insert_tech_or_manager" on public.workflow_events;
 create policy "workflow_events_insert_tech_or_manager"
   on public.workflow_events for insert
   to authenticated
@@ -424,11 +564,13 @@ create policy "workflow_events_insert_tech_or_manager"
   );
 
 -- 8.5 assumption_settings policies
+drop policy if exists "assumption_settings_select_staff" on public.assumption_settings;
 create policy "assumption_settings_select_staff"
   on public.assumption_settings for select
   to authenticated
   using (public.current_user_role() in ('viewer', 'technician', 'manager'));
 
+drop policy if exists "assumption_settings_update_manager_only" on public.assumption_settings;
 create policy "assumption_settings_update_manager_only"
   on public.assumption_settings for update
   to authenticated
@@ -436,11 +578,13 @@ create policy "assumption_settings_update_manager_only"
   with check (public.current_user_role() = 'manager');
 
 -- 8.6 email_events policies (Manager only)
+drop policy if exists "email_events_select_manager_only" on public.email_events;
 create policy "email_events_select_manager_only"
   on public.email_events for select
   to authenticated
   using (public.current_user_role() = 'manager');
 
+drop policy if exists "email_events_insert_manager_only" on public.email_events;
 create policy "email_events_insert_manager_only"
   on public.email_events for insert
   to authenticated

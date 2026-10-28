@@ -59,7 +59,7 @@ export function EmailSummaryPanel({
   actorRole: UserRole;
 }) {
   const [showPreview, setShowPreview] = useState(false);
-  const [recipient, setRecipient] = useState('ops-manager@example.org');
+  const [recipient, setRecipient] = useState('info@ensure.in');
   const [statusMsg, setStatusMsg] = useState<{
     type: 'info' | 'success' | 'error';
     text: string;

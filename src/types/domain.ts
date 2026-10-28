@@ -195,3 +195,37 @@ export type ActionErrorCode =
 export type ActionResponse<T> =
   | { ok: true; data: T }
   | { ok: false; code: ActionErrorCode; message: string; fieldErrors?: Record<string, string[]> };
+
+export type UserProfile = {
+  id: string;
+  email: string;
+  displayName: string;
+  department: string;
+  jobTitle: string;
+  role: UserRole;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type EmailEventRecord = {
+  id: string;
+  type: string;
+  recipient: string;
+  providerId: string | null;
+  idempotencyKey: string;
+  status: 'sent' | 'failed' | 'skipped';
+  sentBy: string;
+  createdAt: string;
+};
+
+export type AdminSystemOverview = {
+  profiles: UserProfile[];
+  emailEvents: EmailEventRecord[];
+  counts: {
+    users: number;
+    devices: number;
+    assessments: number;
+    workflowEvents: number;
+    emailEvents: number;
+  };
+};
