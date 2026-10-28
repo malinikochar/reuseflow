@@ -71,11 +71,13 @@ import {
   AdminGovernancePanel,
   UserProfilePanel,
 } from '@/components/profile/profile-and-admin-panel';
+import { DeviceResearchPanel } from '@/components/research/device-research-panel';
 import { cn } from '@/lib/utils';
 
 type WorkspaceTab =
   | 'inventory'
   | 'intake'
+  | 'research'
   | 'scenario'
   | 'reports'
   | 'profile'
@@ -84,6 +86,7 @@ type WorkspaceTab =
 type WorkbenchSubTab =
   | 'all'
   | 'assessment'
+  | 'research'
   | 'workflow'
   | 'specs'
   | 'timeline';
@@ -393,6 +396,28 @@ export function OperationsWorkspace({
     }
   };
 
+  const handleApplyResearchComp = async (
+    suggestedCompCents: number,
+    suggestedPartsCents?: number
+  ): Promise<{ ok: boolean; message?: string }> => {
+    if (!selectedDevice) return { ok: false, message: 'No device selected.' };
+    return handleUpdateIntakeAndReassess({
+      id: selectedDevice.id,
+      ramGb: selectedDevice.ramGb,
+      storageGb: selectedDevice.storageGb,
+      boots: selectedDevice.boots,
+      condition: selectedDevice.condition,
+      batterySafety: selectedDevice.batterySafety,
+      storagePresent: selectedDevice.storagePresent,
+      repairable: selectedDevice.repairable,
+      chargerIncluded: selectedDevice.chargerIncluded,
+      partsCostCents:
+        suggestedPartsCents !== undefined ? suggestedPartsCents : selectedDevice.partsCostCents,
+      estimatedLaborMinutes: selectedDevice.estimatedLaborMinutes,
+      comparableValueCents: suggestedCompCents,
+    });
+  };
+
   const navItems: Array<{
     id: WorkspaceTab;
     label: string;
@@ -410,6 +435,12 @@ export function OperationsWorkspace({
       label: 'New Device',
       badge: '90s Intake',
       icon: PlusCircle,
+    },
+    {
+      id: 'research',
+      label: 'AI & Web Research',
+      badge: 'Tavily + Nebius',
+      icon: Sparkles,
     },
     {
       id: 'scenario',
@@ -906,6 +937,11 @@ export function OperationsWorkspace({
                                 icon: Calculator,
                               },
                               {
+                                id: 'research',
+                                label: 'AI & Web Research (Tavily + Nebius)',
+                                icon: Sparkles,
+                              },
+                              {
                                 id: 'workflow',
                                 label: 'Approval & Sanitization Gate',
                                 icon: ShieldCheck,
@@ -961,28 +997,40 @@ export function OperationsWorkspace({
 
                     {/* Main Workbench Panels */}
                     {workbenchSubTab === 'all' && (
-                      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                        <div className="lg:col-span-7 space-y-6">
-                          <AssessmentPanel
-                            key={`assessment-panel-${selectedDevice.id}`}
-                            device={selectedDevice}
-                            engineConfig={engineConfig}
-                            actorRole={activeActor.role}
-                            onRunAssessment={handleRunAssessment}
-                            isAssessing={isBusy}
-                          />
+                      <div className="space-y-6">
+                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                          <div className="lg:col-span-7 space-y-6">
+                            <AssessmentPanel
+                              key={`assessment-panel-${selectedDevice.id}`}
+                              device={selectedDevice}
+                              engineConfig={engineConfig}
+                              actorRole={activeActor.role}
+                              onRunAssessment={handleRunAssessment}
+                              isAssessing={isBusy}
+                            />
+                          </div>
+
+                          <div className="lg:col-span-5 space-y-6">
+                            <WorkflowDecisionControls
+                              device={selectedDevice}
+                              actorRole={activeActor.role}
+                              onTransition={handleTransition}
+                              onVerifySanitization={handleVerifySanitization}
+                              isBusy={isBusy}
+                            />
+                            <WorkflowTimeline events={selectedDevice.workflowEvents} />
+                          </div>
                         </div>
 
-                        <div className="lg:col-span-5 space-y-6">
-                          <WorkflowDecisionControls
-                            device={selectedDevice}
-                            actorRole={activeActor.role}
-                            onTransition={handleTransition}
-                            onVerifySanitization={handleVerifySanitization}
-                            isBusy={isBusy}
-                          />
-                          <WorkflowTimeline events={selectedDevice.workflowEvents} />
-                        </div>
+                        <DeviceResearchPanel
+                          key={`workbench-research-${selectedDevice.id}`}
+                          device={selectedDevice}
+                          allDevices={allDevices}
+                          actorRole={activeActor.role}
+                          onSelectDevice={(id) => setSelectedDeviceId(id)}
+                          onApplySuggestedComp={handleApplyResearchComp}
+                          compact
+                        />
                       </div>
                     )}
 
@@ -994,6 +1042,17 @@ export function OperationsWorkspace({
                         actorRole={activeActor.role}
                         onRunAssessment={handleRunAssessment}
                         isAssessing={isBusy}
+                      />
+                    )}
+
+                    {workbenchSubTab === 'research' && (
+                      <DeviceResearchPanel
+                        key={`subtab-research-${selectedDevice.id}`}
+                        device={selectedDevice}
+                        allDevices={allDevices}
+                        actorRole={activeActor.role}
+                        onSelectDevice={(id) => setSelectedDeviceId(id)}
+                        onApplySuggestedComp={handleApplyResearchComp}
                       />
                     )}
 
@@ -1027,6 +1086,20 @@ export function OperationsWorkspace({
                   isSubmitting={isBusy}
                   onSubmit={handleCreateDevice}
                   onCancel={() => selectTab('inventory')}
+                />
+              </div>
+            )}
+
+            {/* TAB 2.5: AI & Live Web Bench Research Copilot (Tavily + Nebius TokenFactory) */}
+            {activeTab === 'research' && (
+              <div className="space-y-6">
+                <DeviceResearchPanel
+                  key={`top-research-${selectedDevice?.id ?? 'none'}`}
+                  device={selectedDevice}
+                  allDevices={allDevices}
+                  actorRole={activeActor.role}
+                  onSelectDevice={(id) => setSelectedDeviceId(id)}
+                  onApplySuggestedComp={handleApplyResearchComp}
                 />
               </div>
             )}

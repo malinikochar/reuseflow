@@ -21,12 +21,13 @@ Electronics reuse organizations must quickly decide whether a donated laptop, de
 **ReuseFlow** provides:
 1. **90-Second Standardized Device Intake:** Captures hardware category, specs, boot status, cosmetic condition, battery safety, storage media presence, parts/labor assumptions, and manual comparable value estimates.
 2. **Versioned, Explainable Deterministic Engine (`v1.0.0`):** Pure integer-cents cost/margin rules returning explicit recommendation codes (`REFURBISH_CANDIDATE`, `REVIEW_REQUIRED`, `RECYCLE_REVIEW`, `QUARANTINE`, `INSUFFICIENT_DATA`), cost breakdowns, and a non-destructive **"What-If?"** parts cost simulator.
-3. **Pre-Economic Safety & External Sanitization Gates:**
+3. **AI & Live Web Bench Research Copilot (`Tavily + Nebius TokenFactory`):** Optional human-in-the-loop bench research assistant (`/api/research/device-intel`) that fetches live cited secondary-market comparable pricing references and repairability guides via **Tavily Search API** and synthesizes technician guidance via **Nebius TokenFactory LLM** (`Qwen/Qwen3-30B-A3B-Instruct-2507`). Human confirmation is required before applying any suggested comparable value to the deterministic `v1.0.0` engine.
+4. **Pre-Economic Safety & External Sanitization Gates:**
    - **Swollen Battery Hazard:** Immediately triggers `QUARANTINE` *before* any economic scoring and locks refurbishment approval.
    - **Data Sanitization Gate:** Separate from economic viability; storage-bearing devices cannot transition to `ready` or `closed` until a manager records verification of an externally completed sanitization procedure (this log is an internal assertion, never a wipe certificate).
-4. **Role-Guarded Human Approval & Append-Only Audit Trail:** Every recommendation requires human review (`requiresHumanApproval: true`). Status transitions check current state preconditions and append immutable `workflow_events`.
-5. **Interactive Scenario Lab:** Lets judges and operations leads test hypothetical monthly time/labor capacity scenarios with editable assumptions and explicit disclaimers.
-6. **Zero-Login Public Sandbox (`/demo`) + Authenticated Production App (`/app`):**
+5. **Role-Guarded Human Approval & Append-Only Audit Trail:** Every recommendation requires human review (`requiresHumanApproval: true`). Status transitions check current state preconditions and append immutable `workflow_events`.
+6. **Interactive Scenario Lab:** Lets judges and operations leads test hypothetical monthly time/labor capacity scenarios with editable assumptions and explicit disclaimers.
+7. **Zero-Login Public Sandbox (`/demo`) + Authenticated Production App (`/app`):**
    - `/demo` runs entirely in browser-local synthetic state, seeded with the 6 canonical PRD fixture cases (`Case A` through `Case F`), a role simulator (`Manager`, `Technician`, `Viewer`), and 1-click sandbox reset. It never writes to Supabase or sends Resend emails.
    - `/app` enforces cookie-based `@supabase/ssr` authentication, Postgres Row-Level Security (`supabase/migrations/20261028000001_initial_schema_and_rls.sql`), transactional status transition RPCs, and optional manager-only Resend operational summary emails (`/api/reports/send-summary`).
 
@@ -37,6 +38,7 @@ Electronics reuse organizations must quickly decide whether a donated laptop, de
 - **Framework:** Next.js 15 App Router, React 19, TypeScript (`strict: true`)
 - **Styling & UI:** Tailwind CSS v4, Lucide icons, accessible operations SaaS components shared across `/demo` and `/app`
 - **Validation & Domain Logic:** Zod schemas (`src/lib/validation/schemas.ts`), pure deterministic engine (`src/lib/decision/engine.ts`), Scenario Lab calculator (`src/lib/decision/scenario.ts`)
+- **AI & Live Web Research Copilot (Advisory):** Server-only **Tavily Search API** + **Nebius TokenFactory LLM** (`src/lib/research/device-research-service.ts`, `/api/research/device-intel`) with deterministic spec-tier fallback when offline
 - **Database & Auth (`/app`):** Supabase Postgres, `@supabase/ssr` cookie auth, Row-Level Security (RLS) policies, append-only triggers on `assessments` and `workflow_events`
 - **Notifications (Optional P1):** Server-only Resend SDK (`src/lib/email/resend-service.ts`) with manager authorization, `REPORT_RECIPIENT_ALLOWLIST`, idempotency keys, and rate limiting
 - **Testing:** Vitest unit & integration suites (`tests/unit/`, `tests/integration/`) + Playwright E2E browser smoke suite (`tests/e2e/`)
@@ -73,14 +75,14 @@ Open `http://localhost:3000` (landing page) or `http://localhost:3000/demo` (zer
 ```bash
 npm run typecheck   # TypeScript strict mode check (tsc --noEmit)
 npm run lint        # ESLint Next.js & TypeScript rules
-npm run test        # Vitest unit & security integration suites (28 tests)
+npm run test        # Vitest unit & security integration suites (32 tests)
 npm run build       # Production Next.js build verification
 npm run test:e2e    # Playwright end-to-end browser verification (3 suites)
 ```
 
 ---
 
-## 5. Supabase & Resend Configuration (For `/app`)
+## 5. Supabase, Resend, Tavily & Nebius Configuration
 
 1. Create a Supabase project and apply `supabase/migrations/20261028000001_initial_schema_and_rls.sql` in the SQL Editor (and optionally run `supabase/tests/rls_verification.sql` to verify RLS and `anon` privilege revocation).
 2. Populate `.env.local` (or Vercel Environment Variables):
@@ -94,8 +96,14 @@ npm run test:e2e    # Playwright end-to-end browser verification (3 suites)
    RESEND_API_KEY=re_your_server_key
    RESEND_FROM_EMAIL="ReuseFlow <updates@your-verified-domain.org>"
    REPORT_RECIPIENT_ALLOWLIST="manager@your-verified-domain.org"
+
+   # Optional AI & Web Bench Research Copilot (Server-Only)
+   TAVILY_API_KEY=tvly_your_server_key
+   NEBIUS_API_KEY=your_nebius_tokenfactory_key
+   NEBIUS_BASE_URL=https://api.tokenfactory.nebius.com/v1
+   NEBIUS_MODEL=Qwen/Qwen3-30B-A3B-Instruct-2507
    ```
-3. Never expose `RESEND_API_KEY` or Supabase secret/service-role keys under `NEXT_PUBLIC_`.
+3. Never expose `RESEND_API_KEY`, `TAVILY_API_KEY`, `NEBIUS_API_KEY`, or Supabase secret/service-role keys under `NEXT_PUBLIC_`.
 
 ---
 
