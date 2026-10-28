@@ -132,7 +132,6 @@ export function DeviceIntakeForm({
     };
   };
 
-  // Compute live preview of engine result if inputs are valid
   let livePreview = null;
   try {
     const payload = buildPayload();
@@ -159,15 +158,15 @@ export function DeviceIntakeForm({
   return (
     <form
       onSubmit={handleSubmit}
-      className="rounded-xl border border-stone-200 bg-white shadow-xs overflow-hidden"
+      className="genesis-card overflow-hidden"
       noValidate
     >
-      <div className="border-b border-stone-200 bg-stone-50 px-5 py-4 flex items-center justify-between">
+      <div className="border-b border-[#E8E8EC] bg-[#FFFFFF] px-6 py-4 flex items-center justify-between">
         <div>
-          <h3 className="text-base font-bold text-stone-950">
+          <h3 className="font-display text-[18px] font-bold text-[#0A0A0A]">
             New Donated Device Intake & Triage
           </h3>
-          <p className="text-xs text-stone-600">
+          <p className="text-[13px] text-[#6B6B6B]">
             Enter hardware condition, safety checks, and repair cost estimates. Never enter donor PII or real serial numbers.
           </p>
         </div>
@@ -176,18 +175,18 @@ export function DeviceIntakeForm({
             type="button"
             onClick={onCancel}
             aria-label="Close intake form"
-            className="rounded-lg p-1.5 text-stone-500 hover:bg-stone-200 hover:text-stone-800 cursor-pointer"
+            className="genesis-btn-secondary p-2 text-[#6B6B6B] hover:text-[#0A0A0A] cursor-pointer"
           >
-            <X className="h-5 w-5" aria-hidden="true" />
+            <X className="h-4 w-4" aria-hidden="true" />
           </button>
         )}
       </div>
 
       {/* Quick Preset Bar for 90-second Judge Walkthrough */}
-      <div className="border-b border-stone-200 bg-teal-950/5 px-5 py-3">
+      <div className="border-b border-[#E8E8EC] bg-[#FAFAFA] px-6 py-3">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="inline-flex items-center gap-1 text-xs font-semibold text-teal-950">
-            <Sparkles className="h-3.5 w-3.5 text-teal-700" aria-hidden="true" />
+          <span className="inline-flex items-center gap-1.5 text-[12px] font-medium text-[#6B6B6B]">
+            <Sparkles className="h-3.5 w-3.5 text-[#6366F1]" aria-hidden="true" />
             Quick-Load PRD Fixture:
           </span>
           {PRD_FIXTURE_CASES.map((f) => (
@@ -195,7 +194,7 @@ export function DeviceIntakeForm({
               key={f.id}
               type="button"
               onClick={() => applyPreset(f.code)}
-              className="rounded-md border border-stone-300 bg-white hover:bg-teal-50 hover:border-teal-600 px-2.5 py-1 text-xs font-medium text-stone-800 transition-colors cursor-pointer"
+              className="rounded-full bg-[#F4F4F6] hover:bg-[#6366F1] hover:text-[#FAFAFA] px-3 py-1 text-[12px] font-medium text-[#6B6B6B] transition-colors cursor-pointer"
               title={f.summary}
             >
               Case {f.code}: {f.title.replace(/^Case [A-F] — /, '')}
@@ -204,11 +203,11 @@ export function DeviceIntakeForm({
         </div>
       </div>
 
-      <div className="p-5 space-y-6">
+      <div className="p-6 space-y-6">
         {errorMessage && (
           <div
             role="alert"
-            className="rounded-lg border border-red-300 bg-red-50 p-3.5 text-sm text-red-900 font-medium"
+            className="rounded-[6px] border border-[#EF4444] bg-[#EF4444]/10 p-3.5 text-[13px] text-[#991B1B] font-medium"
           >
             {errorMessage}
           </div>
@@ -216,14 +215,14 @@ export function DeviceIntakeForm({
 
         {/* Section 1: Identification & Specs */}
         <div>
-          <h4 className="text-xs font-bold uppercase tracking-wider text-stone-500 mb-3">
+          <h4 className="text-[11px] font-medium uppercase tracking-wider text-[#9C9C9C] mb-3">
             1. Hardware Identification & Specs
           </h4>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div>
               <label
                 htmlFor="intake-asset-tag"
-                className="block text-xs font-semibold text-stone-800 mb-1"
+                className="block text-[13px] font-medium text-[#0A0A0A] mb-1.5"
               >
                 Internal Asset Tag *
               </label>
@@ -234,14 +233,14 @@ export function DeviceIntakeForm({
                 value={assetTag}
                 onChange={(e) => setAssetTag(e.target.value)}
                 placeholder="FG-DEMO-201"
-                className="w-full rounded-lg border border-stone-300 px-3 py-2 text-sm text-stone-900 focus:border-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-600/20"
+                className="genesis-input w-full font-mono"
               />
             </div>
 
             <div>
               <label
                 htmlFor="intake-category"
-                className="block text-xs font-semibold text-stone-800 mb-1"
+                className="block text-[13px] font-medium text-[#0A0A0A] mb-1.5"
               >
                 Device Category *
               </label>
@@ -249,7 +248,7 @@ export function DeviceIntakeForm({
                 id="intake-category"
                 value={category}
                 onChange={(e) => handleCategoryChange(e.target.value as DeviceCategory)}
-                className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-900 focus:border-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-600/20"
+                className="genesis-input w-full"
               >
                 <option value="laptop">Laptop</option>
                 <option value="desktop">Desktop</option>
@@ -260,7 +259,7 @@ export function DeviceIntakeForm({
             <div>
               <label
                 htmlFor="intake-brand"
-                className="block text-xs font-semibold text-stone-800 mb-1"
+                className="block text-[13px] font-medium text-[#0A0A0A] mb-1.5"
               >
                 Brand *
               </label>
@@ -271,14 +270,14 @@ export function DeviceIntakeForm({
                 value={brand}
                 onChange={(e) => setBrand(e.target.value)}
                 placeholder="Lenovo, Dell, HP..."
-                className="w-full rounded-lg border border-stone-300 px-3 py-2 text-sm text-stone-900 focus:border-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-600/20"
+                className="genesis-input w-full"
               />
             </div>
 
             <div>
               <label
                 htmlFor="intake-model"
-                className="block text-xs font-semibold text-stone-800 mb-1"
+                className="block text-[13px] font-medium text-[#0A0A0A] mb-1.5"
               >
                 Model (No Serial Numbers) *
               </label>
@@ -289,16 +288,16 @@ export function DeviceIntakeForm({
                 value={model}
                 onChange={(e) => setModel(e.target.value)}
                 placeholder="ThinkPad T480"
-                className="w-full rounded-lg border border-stone-300 px-3 py-2 text-sm text-stone-900 focus:border-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-600/20"
+                className="genesis-input w-full"
               />
             </div>
 
             <div>
               <label
                 htmlFor="intake-ram"
-                className="block text-xs font-semibold text-stone-800 mb-1"
+                className="block text-[13px] font-medium text-[#0A0A0A] mb-1.5"
               >
-                RAM (GB) <span className="font-normal text-stone-500">(blank if unknown)</span>
+                RAM (GB) <span className="font-normal text-[#9C9C9C]">(blank if unknown)</span>
               </label>
               <input
                 id="intake-ram"
@@ -308,14 +307,14 @@ export function DeviceIntakeForm({
                 value={ramGb}
                 onChange={(e) => setRamGb(e.target.value)}
                 placeholder="8"
-                className="w-full rounded-lg border border-stone-300 px-3 py-2 text-sm text-stone-900 focus:border-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-600/20"
+                className="genesis-input w-full"
               />
             </div>
 
             <div>
               <label
                 htmlFor="intake-storage-present"
-                className="block text-xs font-semibold text-stone-800 mb-1"
+                className="block text-[13px] font-medium text-[#0A0A0A] mb-1.5"
               >
                 Storage Media Installed?
               </label>
@@ -327,7 +326,7 @@ export function DeviceIntakeForm({
                   setStoragePresent(present);
                   if (!present) setStorageGb('');
                 }}
-                className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-900 focus:border-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-600/20"
+                className="genesis-input w-full"
               >
                 <option value="yes">Yes — Drive Present (Requires Wipe Check)</option>
                 <option value="no">No Drive Installed</option>
@@ -337,7 +336,7 @@ export function DeviceIntakeForm({
             <div>
               <label
                 htmlFor="intake-storage-gb"
-                className="block text-xs font-semibold text-stone-800 mb-1"
+                className="block text-[13px] font-medium text-[#0A0A0A] mb-1.5"
               >
                 Storage Capacity (GB)
               </label>
@@ -350,14 +349,14 @@ export function DeviceIntakeForm({
                 value={storagePresent ? storageGb : ''}
                 onChange={(e) => setStorageGb(e.target.value)}
                 placeholder={storagePresent ? '256' : 'N/A (No drive)'}
-                className="w-full rounded-lg border border-stone-300 px-3 py-2 text-sm text-stone-900 disabled:bg-stone-100 disabled:text-stone-400 focus:border-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-600/20"
+                className="genesis-input w-full disabled:bg-[#FAFAFA] disabled:text-[#9C9C9C]"
               />
             </div>
 
             <div>
               <label
                 htmlFor="intake-charger"
-                className="block text-xs font-semibold text-stone-800 mb-1"
+                className="block text-[13px] font-medium text-[#0A0A0A] mb-1.5"
               >
                 Power Adapter Included?
               </label>
@@ -365,7 +364,7 @@ export function DeviceIntakeForm({
                 id="intake-charger"
                 value={chargerIncluded ? 'yes' : 'no'}
                 onChange={(e) => setChargerIncluded(e.target.value === 'yes')}
-                className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-900 focus:border-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-600/20"
+                className="genesis-input w-full"
               >
                 <option value="yes">Yes</option>
                 <option value="no">No</option>
@@ -376,14 +375,14 @@ export function DeviceIntakeForm({
 
         {/* Section 2: Safety & Functional Triage */}
         <div>
-          <h4 className="text-xs font-bold uppercase tracking-wider text-stone-500 mb-3">
+          <h4 className="text-[11px] font-medium uppercase tracking-wider text-[#9C9C9C] mb-3">
             2. Physical Safety & Functional Inspection
           </h4>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div>
               <label
                 htmlFor="intake-battery-safety"
-                className="block text-xs font-semibold text-stone-800 mb-1"
+                className="block text-[13px] font-medium text-[#0A0A0A] mb-1.5"
               >
                 Battery Safety Check *
               </label>
@@ -391,10 +390,10 @@ export function DeviceIntakeForm({
                 id="intake-battery-safety"
                 value={batterySafety}
                 onChange={(e) => setBatterySafety(e.target.value as BatterySafety)}
-                className={`w-full rounded-lg border px-3 py-2 text-sm font-medium focus:outline-none focus:ring-2 ${
+                className={`genesis-input w-full ${
                   batterySafety === 'swollen'
-                    ? 'border-amber-600 bg-amber-50 text-amber-950 focus:ring-amber-500'
-                    : 'border-stone-300 bg-white text-stone-900 focus:border-teal-700 focus:ring-teal-600/20'
+                    ? 'border-[#F59E0B] bg-[#F59E0B]/10 text-[#92400E]'
+                    : ''
                 }`}
               >
                 <option value="normal">Normal (Safe)</option>
@@ -410,7 +409,7 @@ export function DeviceIntakeForm({
             <div>
               <label
                 htmlFor="intake-condition"
-                className="block text-xs font-semibold text-stone-800 mb-1"
+                className="block text-[13px] font-medium text-[#0A0A0A] mb-1.5"
               >
                 Cosmetic / Chassis Condition *
               </label>
@@ -418,7 +417,7 @@ export function DeviceIntakeForm({
                 id="intake-condition"
                 value={condition}
                 onChange={(e) => setCondition(e.target.value as Condition)}
-                className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-900 focus:border-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-600/20"
+                className="genesis-input w-full"
               >
                 <option value="good">Good (Minor wear)</option>
                 <option value="fair">Fair (Serviceable wear)</option>
@@ -430,7 +429,7 @@ export function DeviceIntakeForm({
             <div>
               <label
                 htmlFor="intake-boots"
-                className="block text-xs font-semibold text-stone-800 mb-1"
+                className="block text-[13px] font-medium text-[#0A0A0A] mb-1.5"
               >
                 Powers On / Boots to POST?
               </label>
@@ -438,7 +437,7 @@ export function DeviceIntakeForm({
                 id="intake-boots"
                 value={boots}
                 onChange={(e) => setBoots(e.target.value as 'true' | 'false' | 'unknown')}
-                className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-900 focus:border-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-600/20"
+                className="genesis-input w-full"
               >
                 <option value="true">Yes — Boots cleanly</option>
                 <option value="false">No — Fails to boot</option>
@@ -449,7 +448,7 @@ export function DeviceIntakeForm({
             <div>
               <label
                 htmlFor="intake-repairable"
-                className="block text-xs font-semibold text-stone-800 mb-1"
+                className="block text-[13px] font-medium text-[#0A0A0A] mb-1.5"
               >
                 Technically Repairable?
               </label>
@@ -459,7 +458,7 @@ export function DeviceIntakeForm({
                 onChange={(e) =>
                   setRepairable(e.target.value as 'true' | 'false' | 'unknown')
                 }
-                className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-900 focus:border-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-600/20"
+                className="genesis-input w-full"
               >
                 <option value="true">Yes — Standard parts/service</option>
                 <option value="false">No — Irreparable board/damage</option>
@@ -471,14 +470,14 @@ export function DeviceIntakeForm({
 
         {/* Section 3: Repair Economics Assumptions */}
         <div>
-          <h4 className="text-xs font-bold uppercase tracking-wider text-stone-500 mb-3">
+          <h4 className="text-[11px] font-medium uppercase tracking-wider text-[#9C9C9C] mb-3">
             3. Repair Cost & Manual Comparable Value Assumptions
           </h4>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
               <label
                 htmlFor="intake-parts-dollars"
-                className="block text-xs font-semibold text-stone-800 mb-1"
+                className="block text-[13px] font-medium text-[#0A0A0A] mb-1.5"
               >
                 Estimated Parts Cost ($ USD)
               </label>
@@ -491,14 +490,14 @@ export function DeviceIntakeForm({
                 value={partsDollars}
                 onChange={(e) => setPartsDollars(e.target.value)}
                 placeholder="20.00"
-                className="w-full rounded-lg border border-stone-300 px-3 py-2 text-sm text-stone-900 focus:border-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-600/20"
+                className="genesis-input w-full font-mono"
               />
             </div>
 
             <div>
               <label
                 htmlFor="intake-labor-minutes"
-                className="block text-xs font-semibold text-stone-800 mb-1"
+                className="block text-[13px] font-medium text-[#0A0A0A] mb-1.5"
               >
                 Estimated Bench Labor (Minutes)
               </label>
@@ -511,14 +510,14 @@ export function DeviceIntakeForm({
                 value={laborMinutes}
                 onChange={(e) => setLaborMinutes(e.target.value)}
                 placeholder="45"
-                className="w-full rounded-lg border border-stone-300 px-3 py-2 text-sm text-stone-900 focus:border-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-600/20"
+                className="genesis-input w-full font-mono"
               />
             </div>
 
             <div>
               <label
                 htmlFor="intake-comparable-dollars"
-                className="block text-xs font-semibold text-stone-800 mb-1"
+                className="block text-[13px] font-medium text-[#0A0A0A] mb-1.5"
               >
                 Manual Comparable Value ($ USD)
               </label>
@@ -531,7 +530,7 @@ export function DeviceIntakeForm({
                 value={comparableDollars}
                 onChange={(e) => setComparableDollars(e.target.value)}
                 placeholder="180.00 (leave blank for Case E)"
-                className="w-full rounded-lg border border-stone-300 px-3 py-2 text-sm text-stone-900 focus:border-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-600/20"
+                className="genesis-input w-full font-mono"
               />
             </div>
           </div>
@@ -539,31 +538,37 @@ export function DeviceIntakeForm({
 
         {/* Instant Live Preview Banner */}
         {livePreview && (
-          <div className="rounded-lg border border-stone-200 bg-stone-50 p-3.5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div className="genesis-panel bg-[#FAFAFA] p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div className="flex flex-wrap items-center gap-2.5">
-              <span className="text-xs font-semibold text-stone-600">
+              <span className="text-[12px] font-medium text-[#6B6B6B]">
                 Instant Engine Preview (v1.0.0):
               </span>
               <DecisionBadge decision={livePreview.decision} />
               {livePreview.repairCostCents !== null && (
-                <span className="text-xs text-stone-700">
-                  Est. Repair Cost: <strong>{formatCents(livePreview.repairCostCents)}</strong> ·
-                  Net Margin: <strong>{formatCents(livePreview.marginCents)}</strong>
+                <span className="text-[12px] text-[#6B6B6B]">
+                  Est. Repair Cost:{' '}
+                  <span className="font-mono text-[#0A0A0A]">
+                    {formatCents(livePreview.repairCostCents)}
+                  </span>{' '}
+                  · Net Margin:{' '}
+                  <span className="font-mono text-[#0A0A0A]">
+                    {formatCents(livePreview.marginCents)}
+                  </span>
                 </span>
               )}
             </div>
-            <span className="text-[11px] font-medium text-stone-500">
+            <span className="text-[12px] text-[#9C9C9C]">
               Human manager approval still required
             </span>
           </div>
         )}
 
-        <div className="flex items-center justify-end gap-3 pt-2 border-t border-stone-200">
+        <div className="flex items-center justify-end gap-3 pt-3 border-t border-[#E8E8EC]">
           {onCancel && (
             <button
               type="button"
               onClick={onCancel}
-              className="rounded-lg border border-stone-300 bg-white hover:bg-stone-50 px-4 py-2 text-sm font-medium text-stone-700 cursor-pointer"
+              className="genesis-btn-secondary px-4 py-2.5 text-[14px] cursor-pointer"
             >
               Cancel
             </button>
@@ -571,7 +576,7 @@ export function DeviceIntakeForm({
           <button
             type="submit"
             disabled={isSubmitting}
-            className="inline-flex items-center gap-2 rounded-lg bg-teal-800 hover:bg-teal-900 px-5 py-2.5 text-sm font-semibold text-white shadow-xs transition-colors focus:outline-none focus:ring-2 focus:ring-teal-600 disabled:opacity-50 cursor-pointer"
+            className="genesis-btn-primary inline-flex items-center gap-2 px-5 py-2.5 text-[14px] disabled:opacity-50 cursor-pointer"
           >
             <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
             {isSubmitting ? 'Saving & Evaluating...' : 'Save Device & Run Assessment'}

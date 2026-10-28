@@ -26,12 +26,12 @@ import { cn } from '@/lib/utils';
 
 export function CategoryIcon({ category }: { category: DeviceCategory }) {
   if (category === 'laptop') {
-    return <Laptop className="h-4 w-4 text-stone-600 shrink-0" aria-hidden="true" />;
+    return <Laptop className="h-4 w-4 text-[#6B6B6B] shrink-0" aria-hidden="true" />;
   }
   if (category === 'desktop') {
-    return <Monitor className="h-4 w-4 text-stone-600 shrink-0" aria-hidden="true" />;
+    return <Monitor className="h-4 w-4 text-[#6B6B6B] shrink-0" aria-hidden="true" />;
   }
-  return <Tablet className="h-4 w-4 text-stone-600 shrink-0" aria-hidden="true" />;
+  return <Tablet className="h-4 w-4 text-[#6B6B6B] shrink-0" aria-hidden="true" />;
 }
 
 export function CsvExportButton({
@@ -125,9 +125,9 @@ export function CsvExportButton({
       type="button"
       onClick={handleExport}
       disabled={devices.length === 0}
-      className="inline-flex items-center gap-1.5 rounded-lg border border-stone-300 bg-white hover:bg-stone-50 px-3 py-2 text-xs font-medium text-stone-700 transition-colors disabled:opacity-50 cursor-pointer"
+      className="genesis-btn-secondary inline-flex items-center gap-1.5 px-3 py-1.5 text-[12px] disabled:opacity-50 cursor-pointer"
     >
-      <Download className="h-3.5 w-3.5" aria-hidden="true" />
+      <Download className="h-3.5 w-3.5 text-[#6B6B6B]" aria-hidden="true" />
       {isDemo ? 'Export Sample CSV' : 'Export CSV'}
     </button>
   );
@@ -147,15 +147,18 @@ export function DeviceFiltersBar({
   rightSlot?: React.ReactNode;
 }) {
   return (
-    <div className="rounded-xl border border-stone-200 bg-white p-4 shadow-2xs space-y-3">
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+    <div className="genesis-card p-5 space-y-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div>
-          <label htmlFor="filter-search" className="block text-xs font-medium text-stone-600 mb-1">
+          <label
+            htmlFor="filter-search"
+            className="block text-[12px] font-medium text-[#6B6B6B] mb-1.5"
+          >
             Search Asset Tag / Model
           </label>
           <div className="relative">
             <Search
-              className="h-4 w-4 text-stone-400 absolute left-3 top-1/2 -translate-y-1/2"
+              className="h-4 w-4 text-[#9C9C9C] absolute left-3.5 top-1/2 -translate-y-1/2"
               aria-hidden="true"
             />
             <input
@@ -164,7 +167,7 @@ export function DeviceFiltersBar({
               value={filters.search ?? ''}
               onChange={(e) => onChange({ ...filters, search: e.target.value })}
               placeholder="e.g., FG-DEMO-101 or ThinkPad"
-              className="w-full rounded-lg border border-stone-300 pl-9 pr-3 py-1.5 text-sm text-stone-900 focus:border-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-600/20"
+              className="genesis-input w-full pl-9"
             />
           </div>
         </div>
@@ -172,7 +175,7 @@ export function DeviceFiltersBar({
         <div>
           <label
             htmlFor="filter-category"
-            className="block text-xs font-medium text-stone-600 mb-1"
+            className="block text-[12px] font-medium text-[#6B6B6B] mb-1.5"
           >
             Category
           </label>
@@ -185,7 +188,7 @@ export function DeviceFiltersBar({
                 category: e.target.value as DeviceCategory | 'all',
               })
             }
-            className="w-full rounded-lg border border-stone-300 bg-white px-3 py-1.5 text-sm text-stone-900 focus:border-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-600/20"
+            className="genesis-input w-full"
           >
             <option value="all">All Categories</option>
             <option value="laptop">Laptops</option>
@@ -197,7 +200,7 @@ export function DeviceFiltersBar({
         <div>
           <label
             htmlFor="filter-decision"
-            className="block text-xs font-medium text-stone-600 mb-1"
+            className="block text-[12px] font-medium text-[#6B6B6B] mb-1.5"
           >
             Recommended Decision
           </label>
@@ -210,7 +213,7 @@ export function DeviceFiltersBar({
                 decision: e.target.value as Decision | 'all',
               })
             }
-            className="w-full rounded-lg border border-stone-300 bg-white px-3 py-1.5 text-sm text-stone-900 focus:border-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-600/20"
+            className="genesis-input w-full"
           >
             <option value="all">All Recommendations</option>
             <option value="REFURBISH_CANDIDATE">Refurbish Candidate</option>
@@ -224,7 +227,7 @@ export function DeviceFiltersBar({
         <div>
           <label
             htmlFor="filter-status"
-            className="block text-xs font-medium text-stone-600 mb-1"
+            className="block text-[12px] font-medium text-[#6B6B6B] mb-1.5"
           >
             Workflow Status
           </label>
@@ -237,7 +240,7 @@ export function DeviceFiltersBar({
                 status: e.target.value as WorkflowStatus | 'all',
               })
             }
-            className="w-full rounded-lg border border-stone-300 bg-white px-3 py-1.5 text-sm text-stone-900 focus:border-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-600/20"
+            className="genesis-input w-full"
           >
             <option value="all">All Workflow States</option>
             <option value="intake">Intake Draft</option>
@@ -252,11 +255,12 @@ export function DeviceFiltersBar({
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-stone-100 text-xs text-stone-600">
+      <div className="flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-[#E8E8EC] text-[12px] text-[#6B6B6B]">
         <span>
-          Showing <strong>{filteredCount}</strong> of <strong>{totalCount}</strong> devices
+          Showing <span className="font-medium text-[#0A0A0A]">{filteredCount}</span> of{' '}
+          <span className="font-medium text-[#0A0A0A]">{totalCount}</span> devices
         </span>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           {(filters.search ||
             (filters.category && filters.category !== 'all') ||
             (filters.decision && filters.decision !== 'all') ||
@@ -271,7 +275,7 @@ export function DeviceFiltersBar({
                   status: 'all',
                 })
               }
-              className="text-xs font-medium text-teal-800 hover:underline cursor-pointer"
+              className="text-[12px] font-medium text-[#6366F1] hover:text-[#4F46E5] underline cursor-pointer"
             >
               Clear filters
             </button>
@@ -302,12 +306,12 @@ export function DeviceTable({
   }
 
   return (
-    <div className="rounded-xl border border-stone-200 bg-white shadow-2xs overflow-hidden">
+    <div className="genesis-card overflow-hidden">
       {/* Desktop Table */}
       <div className="hidden md:block overflow-x-auto">
         <table className="w-full text-left border-collapse">
           <thead>
-            <tr className="border-b border-stone-200 bg-stone-50 text-[11px] font-bold uppercase tracking-wider text-stone-600">
+            <tr className="border-b border-[#E8E8EC] bg-[#FAFAFA] text-[11px] font-medium uppercase tracking-wider text-[#6B6B6B]">
               <th className="py-3 px-4">Asset & Hardware</th>
               <th className="py-3 px-4">Specs & Condition</th>
               <th className="py-3 px-4">Recommended Action</th>
@@ -317,7 +321,7 @@ export function DeviceTable({
               <th className="py-3 px-4 text-right">Inspect</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-stone-200 text-sm">
+          <tbody className="divide-y divide-[#E8E8EC] text-[14px]">
             {devices.map((device) => {
               const isSelected = device.id === selectedDeviceId;
               const latest = device.latestAssessment;
@@ -329,37 +333,37 @@ export function DeviceTable({
                   className={cn(
                     'transition-colors cursor-pointer',
                     isSelected
-                      ? 'bg-teal-50/70 hover:bg-teal-50'
-                      : 'hover:bg-stone-50/80'
+                      ? 'bg-[#6366F1]/6 hover:bg-[#6366F1]/10'
+                      : 'hover:bg-[#FAFAFA]'
                   )}
                 >
                   <td className="py-3.5 px-4">
-                    <div className="flex items-center gap-2.5">
+                    <div className="flex items-center gap-3">
                       <CategoryIcon category={device.category} />
                       <div>
-                        <p className="font-mono text-xs font-bold text-teal-900">
+                        <p className="font-mono text-[12px] font-medium text-[#6B6B6B]">
                           {device.assetTag}
                         </p>
-                        <p className="font-medium text-stone-900">
+                        <p className="font-medium text-[#0A0A0A]">
                           {device.brand} {device.model}
                         </p>
                       </div>
                     </div>
                   </td>
 
-                  <td className="py-3.5 px-4 text-xs text-stone-700">
-                    <p>
+                  <td className="py-3.5 px-4 text-[12px] text-[#6B6B6B]">
+                    <p className="text-[#0A0A0A]">
                       {device.ramGb !== null ? `${device.ramGb} GB RAM` : 'RAM ?'} ·{' '}
                       {device.storagePresent
                         ? `${device.storageGb ?? '?'} GB Drive`
                         : 'No Drive'}
                     </p>
-                    <p className="text-stone-500 capitalize mt-0.5">
+                    <p className="text-[#9C9C9C] capitalize mt-0.5">
                       Cond: {device.condition} · Battery:{' '}
                       <span
                         className={
                           device.batterySafety === 'swollen'
-                            ? 'font-bold text-amber-800'
+                            ? 'font-medium text-[#F59E0B]'
                             : ''
                         }
                       >
@@ -372,27 +376,30 @@ export function DeviceTable({
                     <DecisionBadge decision={latest?.decision} />
                   </td>
 
-                  <td className="py-3.5 px-4 text-xs">
+                  <td className="py-3.5 px-4 text-[12px] font-mono">
                     {latest && latest.repairCostCents !== null ? (
                       <div>
-                        <p className="text-stone-700">
-                          Cost: <strong>{formatCents(latest.repairCostCents)}</strong>
+                        <p className="text-[#6B6B6B]">
+                          Cost:{' '}
+                          <span className="text-[#0A0A0A]">
+                            {formatCents(latest.repairCostCents)}
+                          </span>
                         </p>
                         <p
                           className={cn(
-                            'font-semibold mt-0.5',
+                            'font-medium mt-0.5',
                             (latest.marginCents ?? 0) < 0
-                              ? 'text-red-700'
+                              ? 'text-[#EF4444]'
                               : (latest.marginCents ?? 0) >= 2000
-                                ? 'text-emerald-800'
-                                : 'text-amber-800'
+                                ? 'text-[#10B981]'
+                                : 'text-[#F59E0B]'
                           )}
                         >
                           Margin: {formatCents(latest.marginCents)}
                         </p>
                       </div>
                     ) : (
-                      <span className="text-stone-400">—</span>
+                      <span className="text-[#9C9C9C]">—</span>
                     )}
                   </td>
 
@@ -416,10 +423,10 @@ export function DeviceTable({
                         onSelectDevice(device);
                       }}
                       className={cn(
-                        'rounded-md px-2.5 py-1 text-xs font-semibold transition-colors cursor-pointer',
+                        'rounded-full px-3 py-1 text-[12px] font-medium transition-colors cursor-pointer',
                         isSelected
-                          ? 'bg-teal-800 text-white'
-                          : 'bg-stone-100 text-stone-800 hover:bg-stone-200'
+                          ? 'bg-[#6366F1] text-[#FAFAFA]'
+                          : 'bg-[#F4F4F6] text-[#6B6B6B] hover:text-[#0A0A0A]'
                       )}
                     >
                       {isSelected ? 'Selected' : 'Inspect'}
@@ -433,7 +440,7 @@ export function DeviceTable({
       </div>
 
       {/* Mobile Stacked Cards (375px safe, zero horizontal overflow) */}
-      <div className="md:hidden divide-y divide-stone-200">
+      <div className="md:hidden divide-y divide-[#E8E8EC]">
         {devices.map((device) => {
           const isSelected = device.id === selectedDeviceId;
           const latest = device.latestAssessment;
@@ -444,17 +451,17 @@ export function DeviceTable({
               onClick={() => onSelectDevice(device)}
               className={cn(
                 'p-4 space-y-2.5 transition-colors cursor-pointer',
-                isSelected ? 'bg-teal-50/70' : 'bg-white hover:bg-stone-50'
+                isSelected ? 'bg-[#6366F1]/6' : 'bg-[#FFFFFF] hover:bg-[#FAFAFA]'
               )}
             >
               <div className="flex items-start justify-between gap-2">
                 <div className="flex items-center gap-2">
                   <CategoryIcon category={device.category} />
                   <div>
-                    <p className="font-mono text-xs font-bold text-teal-900">
+                    <p className="font-mono text-[12px] text-[#6B6B6B]">
                       {device.assetTag}
                     </p>
-                    <p className="text-sm font-semibold text-stone-900">
+                    <p className="text-[14px] font-medium text-[#0A0A0A]">
                       {device.brand} {device.model}
                     </p>
                   </div>
@@ -471,12 +478,12 @@ export function DeviceTable({
                 />
               </div>
 
-              <div className="flex items-center justify-between text-xs text-stone-600 pt-1">
-                <span>
-                  Cost: <strong>{formatCents(latest?.repairCostCents)}</strong> · Margin:{' '}
-                  <strong>{formatCents(latest?.marginCents)}</strong>
+              <div className="flex items-center justify-between text-[12px] text-[#6B6B6B] pt-1">
+                <span className="font-mono">
+                  Cost: {formatCents(latest?.repairCostCents)} · Margin:{' '}
+                  {formatCents(latest?.marginCents)}
                 </span>
-                <span className="font-semibold text-teal-800">
+                <span className="font-medium text-[#6366F1]">
                   {isSelected ? 'Active ↓' : 'Tap to inspect →'}
                 </span>
               </div>

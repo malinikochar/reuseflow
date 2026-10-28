@@ -2,24 +2,127 @@
 
 @layer base {
   :root {
-    --bg-canvas: #f8f9f8;
-    --bg-surface: #ffffff;
-    --bg-muted: #f1f4f2;
-    --text-primary: #111916;
-    --text-secondary: #43504b;
-    --border-subtle: #dce2df;
-    --accent-forest: #0f533f;
-    --accent-teal: #0d7463;
-    --safety-amber: #b45309;
-    --danger-red: #b91c1c;
+    /* Genesis Design System Tokens (https://designmd.ai/chef/genesis) */
+    --genesis-primary: #6366F1;
+    --genesis-primary-hover: #4F46E5;
+    --genesis-secondary: #20970B;
+    --genesis-neutral: #9C9C9C;
+    --genesis-bg: #FAFAFA;
+    --genesis-surface: #FFFFFF;
+    --genesis-text-primary: #0A0A0A;
+    --genesis-text-secondary: #6B6B6B;
+    --genesis-border: #E8E8EC;
+    --genesis-success: #10B981;
+    --genesis-warning: #F59E0B;
+    --genesis-error: #EF4444;
+
+    --font-display: 'General Sans', var(--font-dm-sans), -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-body: var(--font-dm-sans), -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-mono: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, monospace;
   }
 
   body {
-    background-color: var(--bg-canvas);
-    color: var(--text-primary);
-    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    background-color: var(--genesis-bg);
+    color: var(--genesis-text-primary);
+    font-family: var(--font-body);
+    font-size: 15px;
+    line-height: 1.55;
     -webkit-font-smoothing: antialiased;
   }
+
+  h1, h2, h3, h4, .font-display {
+    font-family: var(--font-display);
+    letter-spacing: -0.03em;
+    color: var(--genesis-text-primary);
+  }
+
+  code, pre, .font-mono {
+    font-family: var(--font-mono);
+  }
+}
+
+/* Genesis Component Utility Classes */
+.genesis-dot-grid {
+  background-color: var(--genesis-bg);
+  background-image: radial-gradient(#D8D8E0 1.25px, transparent 1.25px);
+  background-size: 24px 24px;
+}
+
+.genesis-card {
+  background-color: var(--genesis-surface);
+  border: 1px solid var(--genesis-border);
+  border-radius: 12px;
+  transition: transform 200ms ease, box-shadow 200ms ease, border-color 200ms ease;
+}
+
+.genesis-card-interactive:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+}
+
+.genesis-panel {
+  background-color: var(--genesis-surface);
+  border: 1px solid var(--genesis-border);
+  border-radius: 8px;
+}
+
+.genesis-btn-primary {
+  background-color: var(--genesis-primary);
+  color: #FAFAFA;
+  border-radius: 6px;
+  font-weight: 500;
+  transition: transform 150ms ease, background-color 150ms ease, box-shadow 150ms ease;
+}
+
+.genesis-btn-primary:hover:not(:disabled) {
+  background-color: var(--genesis-primary-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.35);
+}
+
+.genesis-btn-primary:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+}
+
+.genesis-btn-secondary {
+  background-color: transparent;
+  color: var(--genesis-text-primary);
+  border: 1px solid var(--genesis-border);
+  border-radius: 6px;
+  font-weight: 500;
+  transition: transform 150ms ease, background-color 150ms ease, border-color 150ms ease;
+}
+
+.genesis-btn-secondary:hover:not(:disabled) {
+  background-color: #F4F4F6;
+  transform: translateY(-1px);
+}
+
+.genesis-btn-secondary:focus-visible {
+  outline: none;
+  border-color: var(--genesis-primary);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+}
+
+.genesis-input {
+  background-color: var(--genesis-surface);
+  border: 1px solid var(--genesis-border);
+  border-radius: 6px;
+  padding: 10px 14px;
+  font-size: 14px;
+  color: var(--genesis-text-primary);
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+.genesis-input::placeholder {
+  color: var(--genesis-neutral);
+}
+
+.genesis-input:focus {
+  outline: none;
+  border-color: var(--genesis-primary);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
 }
 
 /* Print stylesheet for P1 Printable Assessment Sheet */
@@ -28,7 +131,7 @@
     display: none !important;
   }
   body {
-    background: #ffffff !important;
-    color: #000000 !important;
+    background: #FFFFFF !important;
+    color: #0A0A0A !important;
   }
 }

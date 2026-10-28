@@ -131,23 +131,23 @@ export function EmailSummaryPanel({
   return (
     <section
       aria-label="Operational Summary Email Notification"
-      className="rounded-xl border border-stone-200 bg-white shadow-2xs overflow-hidden"
+      className="genesis-card overflow-hidden"
     >
-      <div className="border-b border-stone-200 bg-stone-50 px-5 py-3.5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+      <div className="border-b border-[#E8E8EC] bg-[#FFFFFF] px-6 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
         <div className="flex items-center gap-2">
-          <Mail className="h-4 w-4 text-teal-800" aria-hidden="true" />
-          <h3 className="text-sm font-bold text-stone-950">
+          <Mail className="h-4 w-4 text-[#6B6B6B]" aria-hidden="true" />
+          <h3 className="font-display text-[16px] font-bold text-[#0A0A0A]">
             Manager Operational Summary Email (Optional P1 · Resend)
           </h3>
         </div>
-        <span className="inline-flex items-center gap-1 text-xs font-medium text-stone-600">
-          <ShieldCheck className="h-3.5 w-3.5 text-teal-800" aria-hidden="true" />
+        <span className="inline-flex items-center gap-1.5 text-[12px] font-medium text-[#6B6B6B]">
+          <ShieldCheck className="h-3.5 w-3.5 text-[#10B981]" aria-hidden="true" />
           {isDemo ? 'Isolated Demo Preview — No Email is Sent' : 'Server-Only Allowlisted Send'}
         </span>
       </div>
 
-      <div className="p-5 space-y-4">
-        <p className="text-xs text-stone-600">
+      <div className="p-6 space-y-4">
+        <p className="text-[13px] text-[#6B6B6B]">
           {isDemo
             ? 'In the public /demo sandbox, external email delivery is strictly disabled. Click below to inspect the exact aggregate summary payload that an authenticated manager can send via Resend.'
             : 'Managers can manually trigger an aggregate operations summary to an allowlisted address via Resend. Contains zero PII or serial numbers.'}
@@ -156,12 +156,12 @@ export function EmailSummaryPanel({
         {statusMsg && (
           <div
             role="status"
-            className={`rounded-lg border p-3 text-xs font-medium ${
+            className={`rounded-[6px] border p-3 text-[12px] font-medium ${
               statusMsg.type === 'success'
-                ? 'border-emerald-300 bg-emerald-50 text-emerald-950'
+                ? 'border-[#10B981]/40 bg-[#10B981]/10 text-[#065F46]'
                 : statusMsg.type === 'info'
-                  ? 'border-amber-300 bg-amber-50 text-amber-950'
-                  : 'border-red-300 bg-red-50 text-red-950'
+                  ? 'border-[#F59E0B]/40 bg-[#F59E0B]/10 text-[#92400E]'
+                  : 'border-[#EF4444]/40 bg-[#EF4444]/10 text-[#991B1B]'
             }`}
           >
             {statusMsg.text}
@@ -173,7 +173,7 @@ export function EmailSummaryPanel({
             <div className="flex-1 min-w-[240px]">
               <label
                 htmlFor="summary-recipient-email"
-                className="block text-xs font-semibold text-stone-800 mb-1"
+                className="block text-[13px] font-medium text-[#0A0A0A] mb-1.5"
               >
                 Approved Recipient Email (Checked against server allowlist)
               </label>
@@ -183,7 +183,7 @@ export function EmailSummaryPanel({
                 required
                 value={recipient}
                 onChange={(e) => setRecipient(e.target.value)}
-                className="w-full rounded-lg border border-stone-300 px-3 py-1.5 text-sm text-stone-900"
+                className="genesis-input w-full"
               />
             </div>
           )}
@@ -191,9 +191,9 @@ export function EmailSummaryPanel({
           <button
             type="button"
             onClick={() => setShowPreview((prev) => !prev)}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-stone-300 bg-white hover:bg-stone-50 px-3.5 py-2 text-xs font-semibold text-stone-800 cursor-pointer"
+            className="genesis-btn-secondary inline-flex items-center gap-1.5 px-3.5 py-2 text-[13px] cursor-pointer"
           >
-            <Eye className="h-3.5 w-3.5" aria-hidden="true" />
+            <Eye className="h-3.5 w-3.5 text-[#6B6B6B]" aria-hidden="true" />
             {showPreview ? 'Hide Summary Preview' : 'Preview Summary Content'}
           </button>
 
@@ -201,23 +201,23 @@ export function EmailSummaryPanel({
             <button
               type="submit"
               disabled={isSending || actorRole !== 'manager'}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-teal-800 hover:bg-teal-900 px-4 py-2 text-xs font-semibold text-white disabled:opacity-50 cursor-pointer"
+              className="genesis-btn-secondary inline-flex items-center gap-1.5 px-4 py-2 text-[13px] disabled:opacity-50 cursor-pointer"
             >
-              <Send className="h-3.5 w-3.5" aria-hidden="true" />
+              <Send className="h-3.5 w-3.5 text-[#6366F1]" aria-hidden="true" />
               {isSending ? 'Sending...' : 'Send Summary via Resend'}
             </button>
           )}
         </form>
 
         {showPreview && (
-          <div className="rounded-lg border border-stone-300 bg-stone-900 text-stone-100 p-4 font-mono text-xs space-y-2 overflow-x-auto">
-            <div className="flex items-center justify-between border-b border-stone-700 pb-2 text-amber-300">
+          <div className="genesis-panel bg-[#FAFAFA] p-4 font-mono text-[12px] space-y-2 overflow-x-auto">
+            <div className="flex items-center justify-between border-b border-[#E8E8EC] pb-2 text-[#0A0A0A]">
               <span>Subject: {summary.subject}</span>
-              <span className="rounded bg-amber-400/20 px-2 py-0.5 text-[10px] font-bold uppercase">
+              <span className="rounded-full bg-[#F59E0B]/15 px-2.5 py-0.5 text-[11px] font-medium text-[#92400E]">
                 No Email Is Sent in Demo
               </span>
             </div>
-            <pre className="whitespace-pre-wrap leading-relaxed text-stone-200">
+            <pre className="whitespace-pre-wrap leading-relaxed text-[#6B6B6B]">
               {summary.body}
             </pre>
           </div>

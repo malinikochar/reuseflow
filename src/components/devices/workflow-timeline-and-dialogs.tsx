@@ -75,7 +75,6 @@ export function WorkflowDecisionControls({
     'External NIST 800-88 clear verified on sanitization bench (Reference ID: SAN-BENCH-04).'
   );
 
-  // Sync default selectedNext when device changes
   React.useEffect(() => {
     const nextList = ALLOWED_WORKFLOW_TRANSITIONS[device.status] ?? [];
     setSelectedNext(nextList[0] ?? '');
@@ -132,29 +131,29 @@ export function WorkflowDecisionControls({
   return (
     <section
       aria-label="Human Workflow Approval & Sanitization Controls"
-      className="no-print rounded-xl border border-stone-200 bg-white shadow-2xs overflow-hidden"
+      className="no-print genesis-card overflow-hidden"
     >
-      <div className="border-b border-stone-200 bg-stone-50 px-5 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+      <div className="border-b border-[#E8E8EC] bg-[#FFFFFF] px-6 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
         <div className="flex items-center gap-2">
-          <UserCheck className="h-4 w-4 text-teal-800" aria-hidden="true" />
-          <h3 className="text-base font-bold text-stone-950">
+          <UserCheck className="h-4 w-4 text-[#6B6B6B]" aria-hidden="true" />
+          <h3 className="font-display text-[18px] font-bold text-[#0A0A0A]">
             Human Workflow Review & Gate Controls
           </h3>
         </div>
-        <div className="flex items-center gap-2 text-xs">
-          <span className="text-stone-500">Current State:</span>
+        <div className="flex items-center gap-2 text-[12px]">
+          <span className="text-[#9C9C9C]">Current State:</span>
           <WorkflowStatusBadge status={device.status} />
         </div>
       </div>
 
-      <div className="p-5 space-y-5">
+      <div className="p-6 space-y-5">
         {feedback && (
           <div
             role="alert"
-            className={`rounded-lg border p-3 text-xs font-medium ${
+            className={`rounded-[6px] border p-3 text-[12px] font-medium ${
               feedback.type === 'success'
-                ? 'border-emerald-300 bg-emerald-50 text-emerald-950'
-                : 'border-red-300 bg-red-50 text-red-950'
+                ? 'border-[#10B981]/40 bg-[#10B981]/10 text-[#065F46]'
+                : 'border-[#EF4444]/40 bg-[#EF4444]/10 text-[#991B1B]'
             }`}
           >
             {feedback.text}
@@ -162,19 +161,19 @@ export function WorkflowDecisionControls({
         )}
 
         {/* Data Sanitization Gate Section */}
-        <div className="rounded-lg border border-stone-200 bg-stone-50/70 p-4 space-y-3">
+        <div className="genesis-panel bg-[#FAFAFA] p-4 space-y-3">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
             <div className="flex items-start gap-2.5">
               <HardDrive
-                className="h-4 w-4 text-stone-700 shrink-0 mt-0.5"
+                className="h-4 w-4 text-[#6B6B6B] shrink-0 mt-0.5"
                 aria-hidden="true"
               />
               <div>
-                <h4 className="text-xs font-bold uppercase tracking-wider text-stone-800">
+                <h4 className="text-[11px] font-medium uppercase tracking-wider text-[#6B6B6B]">
                   External Data Sanitization Gate
                 </h4>
-                <p className="text-xs text-stone-600 mt-0.5">
-                  ReuseFlow <strong>never performs device wiping</strong>. Staff must record verification of an external sanitization procedure before a storage-bearing device can reach <code className="font-mono">ready</code> or <code className="font-mono">closed</code>.
+                <p className="text-[12px] text-[#6B6B6B] mt-1">
+                  ReuseFlow <span className="font-medium text-[#0A0A0A]">never performs device wiping</span>. Staff must record verification of an external sanitization procedure before a storage-bearing device can reach <code className="font-mono text-[#0A0A0A]">ready</code> or <code className="font-mono text-[#0A0A0A]">closed</code>.
                 </p>
               </div>
             </div>
@@ -183,9 +182,9 @@ export function WorkflowDecisionControls({
               <button
                 type="button"
                 onClick={() => setShowSanitizeForm((prev) => !prev)}
-                className="inline-flex items-center gap-1.5 rounded-md border border-stone-300 bg-white hover:bg-stone-100 px-3 py-1.5 text-xs font-semibold text-stone-800 shrink-0 self-start sm:self-auto cursor-pointer"
+                className="genesis-btn-secondary inline-flex items-center gap-1.5 px-3 py-1.5 text-[12px] shrink-0 self-start sm:self-auto cursor-pointer"
               >
-                <ClipboardCheck className="h-3.5 w-3.5 text-teal-800" aria-hidden="true" />
+                <ClipboardCheck className="h-3.5 w-3.5 text-[#6366F1]" aria-hidden="true" />
                 {showSanitizeForm
                   ? 'Cancel'
                   : device.sanitizationStatus === 'verified'
@@ -196,10 +195,11 @@ export function WorkflowDecisionControls({
           </div>
 
           {device.sanitizationNote && (
-            <div className="rounded bg-white border border-stone-200 px-3 py-2 text-xs text-stone-700">
-              <span className="font-semibold">Recorded Note:</span> {device.sanitizationNote}{' '}
+            <div className="genesis-panel px-3 py-2 text-[12px] text-[#6B6B6B]">
+              <span className="font-medium text-[#0A0A0A]">Recorded Note:</span>{' '}
+              {device.sanitizationNote}{' '}
               {device.sanitizationVerifiedBy && (
-                <span className="text-stone-500">
+                <span className="text-[#9C9C9C]">
                   ({device.sanitizationVerifiedBy} ·{' '}
                   {formatDateTime(device.sanitizationVerifiedAt)})
                 </span>
@@ -210,13 +210,13 @@ export function WorkflowDecisionControls({
           {showSanitizeForm && (
             <form
               onSubmit={handleSanitizationSubmit}
-              className="rounded-lg border border-teal-200 bg-white p-3.5 space-y-3"
+              className="genesis-panel p-4 space-y-3"
             >
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
                   <label
                     htmlFor="sanitize-status-select"
-                    className="block text-xs font-semibold text-stone-800 mb-1"
+                    className="block text-[12px] font-medium text-[#0A0A0A] mb-1"
                   >
                     External Sanitization Status
                   </label>
@@ -226,7 +226,7 @@ export function WorkflowDecisionControls({
                     onChange={(e) =>
                       setSanitizeStatus(e.target.value as SanitizationStatus)
                     }
-                    className="w-full rounded-md border border-stone-300 bg-white px-2.5 py-1.5 text-xs text-stone-900"
+                    className="genesis-input w-full"
                   >
                     <option value="verified">Verified (External Wipe Completed)</option>
                     <option value="pending">Pending (Not Yet Verified)</option>
@@ -236,7 +236,7 @@ export function WorkflowDecisionControls({
                 <div className="sm:col-span-2">
                   <label
                     htmlFor="sanitize-note-input"
-                    className="block text-xs font-semibold text-stone-800 mb-1"
+                    className="block text-[12px] font-medium text-[#0A0A0A] mb-1"
                   >
                     External Procedure & Bench Reference Note (Not a Wipe Certificate) *
                   </label>
@@ -247,7 +247,7 @@ export function WorkflowDecisionControls({
                     minLength={5}
                     value={sanitizeNote}
                     onChange={(e) => setSanitizeNote(e.target.value)}
-                    className="w-full rounded-md border border-stone-300 px-2.5 py-1.5 text-xs text-stone-900"
+                    className="genesis-input w-full"
                   />
                 </div>
               </div>
@@ -255,7 +255,7 @@ export function WorkflowDecisionControls({
                 <button
                   type="submit"
                   disabled={isBusy}
-                  className="rounded-md bg-teal-800 hover:bg-teal-900 px-3.5 py-1.5 text-xs font-semibold text-white cursor-pointer"
+                  className="genesis-btn-secondary px-3.5 py-1.5 text-[12px] cursor-pointer"
                 >
                   Save External Sanitization Assertion
                 </button>
@@ -266,9 +266,9 @@ export function WorkflowDecisionControls({
 
         {/* Workflow Transition Form */}
         {device.status === 'closed' ? (
-          <div className="rounded-lg border border-stone-200 bg-stone-100 p-4 text-xs text-stone-700">
-            This device record is <strong>closed</strong> (Disposition:{' '}
-            <span className="font-semibold uppercase">{device.disposition ?? 'recorded'}</span>)
+          <div className="genesis-panel bg-[#FAFAFA] p-4 text-[12px] text-[#6B6B6B]">
+            This device record is <span className="font-medium text-[#0A0A0A]">closed</span> (Disposition:{' '}
+            <span className="font-mono uppercase text-[#0A0A0A]">{device.disposition ?? 'recorded'}</span>)
             and is terminal in the MVP workflow.
           </div>
         ) : (
@@ -277,7 +277,7 @@ export function WorkflowDecisionControls({
               <div>
                 <label
                   htmlFor="workflow-next-status"
-                  className="block text-xs font-semibold text-stone-800 mb-1"
+                  className="block text-[12px] font-medium text-[#0A0A0A] mb-1.5"
                 >
                   Select Authorized Next Workflow Action
                 </label>
@@ -285,7 +285,7 @@ export function WorkflowDecisionControls({
                   id="workflow-next-status"
                   value={selectedNext}
                   onChange={(e) => setSelectedNext(e.target.value as WorkflowStatus)}
-                  className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-900 focus:border-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-600/20"
+                  className="genesis-input w-full"
                 >
                   {allowedNext.map((nextState) => {
                     const needsMgr = isManagerRequiredForTransition(
@@ -306,7 +306,7 @@ export function WorkflowDecisionControls({
                 <div>
                   <label
                     htmlFor="workflow-disposition"
-                    className="block text-xs font-semibold text-stone-800 mb-1"
+                    className="block text-[12px] font-medium text-[#0A0A0A] mb-1.5"
                   >
                     Final Disposition Category *
                   </label>
@@ -314,7 +314,7 @@ export function WorkflowDecisionControls({
                     id="workflow-disposition"
                     value={disposition}
                     onChange={(e) => setDisposition(e.target.value as Disposition)}
-                    className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-900 focus:border-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-600/20"
+                    className="genesis-input w-full"
                   >
                     <option value="distributed">Distributed to Community Program</option>
                     <option value="recycled">Transferred to Authorized Recycler</option>
@@ -327,7 +327,7 @@ export function WorkflowDecisionControls({
             <div>
               <label
                 htmlFor="workflow-audit-note"
-                className="block text-xs font-semibold text-stone-800 mb-1"
+                className="block text-[12px] font-medium text-[#0A0A0A] mb-1.5"
               >
                 Immutable Workflow Audit Note *
               </label>
@@ -339,20 +339,19 @@ export function WorkflowDecisionControls({
                 value={transitionNote}
                 onChange={(e) => setTransitionNote(e.target.value)}
                 placeholder="Explain rationale for approval, escalation, or status change..."
-                className="w-full rounded-lg border border-stone-300 px-3 py-2 text-sm text-stone-900 focus:border-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-600/20"
+                className="genesis-input w-full"
               />
             </div>
 
-            {/* Guardrail notices */}
             {selectedNext &&
               isManagerRequiredForTransition(device.status, selectedNext) &&
               actorRole !== 'manager' && (
-                <div className="flex items-center gap-2 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-950">
-                  <Lock className="h-4 w-4 text-amber-700 shrink-0" aria-hidden="true" />
+                <div className="flex items-center gap-2 rounded-[6px] border border-[#F59E0B]/40 bg-[#F59E0B]/10 px-3 py-2 text-[12px] text-[#92400E]">
+                  <Lock className="h-4 w-4 text-[#F59E0B] shrink-0" aria-hidden="true" />
                   <span>
                     Current active role is <strong className="uppercase">{actorRole}</strong>.
                     Final approval into <code className="font-mono">{selectedNext}</code> requires{' '}
-                    <strong>Manager</strong> authorization (try clicking anyway to test server/guard rejection, or switch role in the top bar).
+                    <strong>Manager</strong> authorization (switch role in the top bar or click to test guard rejection).
                   </span>
                 </div>
               )}
@@ -360,9 +359,9 @@ export function WorkflowDecisionControls({
             {device.storagePresent &&
               device.sanitizationStatus !== 'verified' &&
               (selectedNext === 'ready' || selectedNext === 'closed') && (
-                <div className="flex items-center gap-2 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-950">
+                <div className="flex items-center gap-2 rounded-[6px] border border-[#F59E0B]/40 bg-[#F59E0B]/10 px-3 py-2 text-[12px] text-[#92400E]">
                   <ShieldAlert
-                    className="h-4 w-4 text-amber-700 shrink-0"
+                    className="h-4 w-4 text-[#F59E0B] shrink-0"
                     aria-hidden="true"
                   />
                   <span>
@@ -377,7 +376,7 @@ export function WorkflowDecisionControls({
               <button
                 type="submit"
                 disabled={isBusy || !selectedNext}
-                className="inline-flex items-center gap-2 rounded-lg bg-teal-800 hover:bg-teal-900 px-4 py-2 text-xs font-semibold text-white shadow-2xs transition-colors focus:outline-none focus:ring-2 focus:ring-teal-600 disabled:opacity-50 cursor-pointer"
+                className="genesis-btn-primary inline-flex items-center gap-2 px-4 py-2.5 text-[13px] disabled:opacity-50 cursor-pointer"
               >
                 <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
                 {selectedNext ? STATUS_ACTION_LABELS[selectedNext] : 'Apply Transition'}
@@ -398,50 +397,45 @@ export function WorkflowTimeline({ events }: { events: WorkflowEvent[] }) {
   return (
     <section
       aria-label="Immutable Workflow Audit Trail"
-      className="rounded-xl border border-stone-200 bg-white shadow-2xs overflow-hidden"
+      className="genesis-card overflow-hidden"
     >
-      <div className="border-b border-stone-200 bg-stone-50 px-5 py-3.5 flex items-center justify-between">
-        <h3 className="text-sm font-bold text-stone-950">
+      <div className="border-b border-[#E8E8EC] bg-[#FFFFFF] px-6 py-4 flex items-center justify-between">
+        <h3 className="font-display text-[16px] font-bold text-[#0A0A0A]">
           Append-Only Workflow Audit Timeline ({events.length})
         </h3>
-        <span className="text-xs text-stone-500">Newest first · Immutable log</span>
+        <span className="text-[12px] text-[#9C9C9C]">Newest first · Immutable log</span>
       </div>
 
-      <div className="p-5">
-        <ol className="relative border-l-2 border-stone-200 ml-2 space-y-4">
-          {ordered.map((ev) => (
-            <li key={ev.id} className="ml-5">
-              <span
-                className="absolute -left-2 mt-1.5 h-3.5 w-3.5 rounded-full border-2 border-white bg-teal-800"
-                aria-hidden="true"
-              />
-              <div className="rounded-lg border border-stone-200 bg-stone-50/70 p-3">
-                <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
-                  <div className="flex flex-wrap items-center gap-1.5 font-semibold text-stone-900">
-                    {ev.fromStatus ? (
-                      <>
-                        <span className="font-mono text-stone-600">{ev.fromStatus}</span>
-                        <ArrowRight className="h-3 w-3 text-stone-400" aria-hidden="true" />
-                        <span className="font-mono text-teal-900">{ev.toStatus}</span>
-                      </>
-                    ) : (
-                      <span className="font-mono text-teal-900">
-                        Created ({ev.toStatus})
-                      </span>
-                    )}
-                    <span className="rounded bg-stone-200 px-1.5 py-0.5 text-[10px] uppercase tracking-wider text-stone-700">
-                      {ev.actorRole}
-                    </span>
-                  </div>
-                  <time className="text-stone-500" dateTime={ev.createdAt}>
-                    {formatDateTime(ev.createdAt)} · {ev.actorName}
-                  </time>
-                </div>
-                <p className="mt-1.5 text-xs text-stone-700 leading-relaxed">{ev.note}</p>
+      <div className="divide-y divide-[#E8E8EC]">
+        {ordered.map((ev) => (
+          <div
+            key={ev.id}
+            className="px-6 py-3.5 hover:bg-[#FAFAFA] transition-colors space-y-1.5"
+          >
+            <div className="flex flex-wrap items-center justify-between gap-2 text-[12px]">
+              <div className="flex flex-wrap items-center gap-1.5 font-medium text-[#0A0A0A]">
+                {ev.fromStatus ? (
+                  <>
+                    <span className="font-mono text-[#6B6B6B]">{ev.fromStatus}</span>
+                    <ArrowRight className="h-3 w-3 text-[#9C9C9C]" aria-hidden="true" />
+                    <span className="font-mono text-[#6366F1]">{ev.toStatus}</span>
+                  </>
+                ) : (
+                  <span className="font-mono text-[#6366F1]">
+                    Created ({ev.toStatus})
+                  </span>
+                )}
+                <span className="rounded-full bg-[#F4F4F6] px-2.5 py-0.5 text-[11px] uppercase tracking-wider text-[#6B6B6B]">
+                  {ev.actorRole}
+                </span>
               </div>
-            </li>
-          ))}
-        </ol>
+              <time className="text-[#9C9C9C]" dateTime={ev.createdAt}>
+                {formatDateTime(ev.createdAt)} · {ev.actorName}
+              </time>
+            </div>
+            <p className="text-[13px] text-[#6B6B6B] leading-relaxed">{ev.note}</p>
+          </div>
+        ))}
       </div>
     </section>
   );

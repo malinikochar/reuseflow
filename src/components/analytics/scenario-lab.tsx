@@ -51,8 +51,8 @@ export function OperationsDashboardOverview({
     .reduce((acc, d) => acc + (d.latestAssessment?.marginCents ?? 0), 0);
 
   return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="space-y-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         <MetricCard
           label="Total Devices in Queue"
           value={totalDevices}
@@ -80,26 +80,26 @@ export function OperationsDashboardOverview({
       </div>
 
       {/* Category & Workflow Breakdown Bar */}
-      <div className="rounded-xl border border-stone-200 bg-white p-4 shadow-2xs flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 text-xs text-stone-700">
-        <div className="flex flex-wrap items-center gap-3">
-          <span className="inline-flex items-center gap-1.5 font-bold uppercase tracking-wider text-stone-800">
-            <BarChart3 className="h-4 w-4 text-teal-800" aria-hidden="true" />
+      <div className="genesis-card px-5 py-3.5 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 text-[12px] text-[#6B6B6B]">
+        <div className="flex flex-wrap items-center gap-2.5">
+          <span className="inline-flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wider text-[#0A0A0A]">
+            <BarChart3 className="h-4 w-4 text-[#6366F1]" aria-hidden="true" />
             Active Rule Assumptions (v{engineConfig.ruleVersion}):
           </span>
-          <span className="rounded bg-stone-100 px-2 py-1 border border-stone-200">
-            Labor Rate: <strong>{formatCents(engineConfig.hourlyRateCents)}/hr</strong>
+          <span className="rounded-[4px] bg-[#FAFAFA] px-2.5 py-1 border border-[#E8E8EC] font-mono text-[#0A0A0A]">
+            Labor: {formatCents(engineConfig.hourlyRateCents)}/hr
           </span>
-          <span className="rounded bg-stone-100 px-2 py-1 border border-stone-200">
-            Min Refurb Margin: <strong>{formatCents(engineConfig.minMarginCents)}</strong>
+          <span className="rounded-[4px] bg-[#FAFAFA] px-2.5 py-1 border border-[#E8E8EC] font-mono text-[#0A0A0A]">
+            Min Margin: {formatCents(engineConfig.minMarginCents)}
           </span>
-          <span className="rounded bg-stone-100 px-2 py-1 border border-stone-200">
-            Min Laptop RAM: <strong>{engineConfig.minLaptopRamGb} GB</strong>
+          <span className="rounded-[4px] bg-[#FAFAFA] px-2.5 py-1 border border-[#E8E8EC] font-mono text-[#0A0A0A]">
+            Min Laptop RAM: {engineConfig.minLaptopRamGb} GB
           </span>
-          <span className="rounded bg-stone-100 px-2 py-1 border border-stone-200">
-            Overhead: <strong>{formatCents(engineConfig.overheadCents)}</strong>
+          <span className="rounded-[4px] bg-[#FAFAFA] px-2.5 py-1 border border-[#E8E8EC] font-mono text-[#0A0A0A]">
+            Overhead: {formatCents(engineConfig.overheadCents)}
           </span>
         </div>
-        <span className="text-stone-500 italic">
+        <span className="text-[#9C9C9C]">
           All economic thresholds are configurable product hypotheses.
         </span>
       </div>
@@ -176,20 +176,20 @@ export function ScenarioLab({
     <div className="space-y-6">
       <section
         aria-label="Scenario Lab Hypothetical Business Impact Model"
-        className="rounded-xl border border-stone-200 bg-white shadow-2xs overflow-hidden"
+        className="genesis-card overflow-hidden"
       >
-        <div className="border-b border-stone-200 bg-stone-50 px-5 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div className="border-b border-[#E8E8EC] bg-[#FFFFFF] px-6 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
-            <div className="flex flex-wrap items-center gap-2">
-              <Calculator className="h-4 w-4 text-teal-800" aria-hidden="true" />
-              <h3 className="text-base font-bold text-stone-950">
+            <div className="flex flex-wrap items-center gap-2.5">
+              <Calculator className="h-4 w-4 text-[#6366F1]" aria-hidden="true" />
+              <h3 className="font-display text-[18px] font-bold text-[#0A0A0A]">
                 Scenario Lab — Hypothetical Triage Capacity Calculator
               </h3>
-              <span className="rounded-full bg-amber-100 border border-amber-300 px-2.5 py-0.5 text-xs font-semibold text-amber-950">
+              <span className="rounded-full bg-[#F59E0B]/15 px-3 py-1 text-[12px] font-medium text-[#92400E]">
                 Illustrative scenario · not measured organizational performance
               </span>
             </div>
-            <p className="mt-1 text-xs text-stone-600">
+            <p className="mt-1 text-[13px] text-[#6B6B6B]">
               Inputs can be edited; estimates depend on assumptions. Labor value represents hypothetical bench capacity, not necessarily cash savings or incremental revenue.
             </p>
           </div>
@@ -197,21 +197,21 @@ export function ScenarioLab({
           <button
             type="button"
             onClick={handleResetScenario}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-stone-300 bg-white hover:bg-stone-100 px-3 py-1.5 text-xs font-medium text-stone-700 self-start sm:self-auto shrink-0 cursor-pointer"
+            className="genesis-btn-secondary inline-flex items-center gap-1.5 px-3.5 py-2 text-[12px] self-start sm:self-auto shrink-0 cursor-pointer"
           >
-            <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
+            <RotateCcw className="h-3.5 w-3.5 text-[#6B6B6B]" aria-hidden="true" />
             Reset to Seed (100 devices / $200)
           </button>
         </div>
 
-        <div className="p-5 grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div className="p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Interactive Inputs */}
           <div className="lg:col-span-7 space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="rounded-lg border border-stone-200 bg-stone-50/60 p-3.5">
-                <div className="flex justify-between text-xs font-semibold text-stone-800 mb-1.5">
+              <div className="genesis-panel bg-[#FAFAFA] p-4">
+                <div className="flex justify-between text-[13px] font-medium text-[#0A0A0A] mb-2">
                   <label htmlFor="scenario-devices-month">Monthly Device Volume</label>
-                  <span className="font-mono text-teal-900">
+                  <span className="font-mono text-[#6366F1]">
                     {scenario.devicesPerMonth} devices/mo
                   </span>
                 </div>
@@ -228,9 +228,9 @@ export function ScenarioLab({
                       devicesPerMonth: Number.parseInt(e.target.value, 10) || 0,
                     })
                   }
-                  className="w-full accent-teal-800 cursor-pointer"
+                  className="w-full accent-[#6366F1] cursor-pointer"
                 />
-                <div className="mt-2 flex items-center gap-2">
+                <div className="mt-2.5 flex items-center gap-2">
                   <input
                     aria-label="Monthly device volume numeric input"
                     type="number"
@@ -246,16 +246,16 @@ export function ScenarioLab({
                         ),
                       })
                     }
-                    className="w-24 rounded border border-stone-300 bg-white px-2 py-1 text-xs text-stone-900"
+                    className="genesis-input w-24 py-1.5 px-2.5 font-mono"
                   />
-                  <span className="text-[11px] text-stone-500">Seed default: 100/mo</span>
+                  <span className="text-[12px] text-[#9C9C9C]">Seed default: 100/mo</span>
                 </div>
               </div>
 
-              <div className="rounded-lg border border-stone-200 bg-stone-50/60 p-3.5">
-                <div className="flex justify-between text-xs font-semibold text-stone-800 mb-1.5">
+              <div className="genesis-panel bg-[#FAFAFA] p-4">
+                <div className="flex justify-between text-[13px] font-medium text-[#0A0A0A] mb-2">
                   <label htmlFor="scenario-hourly-rate">Loaded Labor Rate ($/hr)</label>
-                  <span className="font-mono text-teal-900">
+                  <span className="font-mono text-[#6366F1]">
                     {formatCents(scenario.hourlyLaborRateCents)}/hr
                   </span>
                 </div>
@@ -272,9 +272,9 @@ export function ScenarioLab({
                       hourlyLaborRateCents: Number.parseInt(e.target.value, 10) || 0,
                     })
                   }
-                  className="w-full accent-teal-800 cursor-pointer"
+                  className="w-full accent-[#6366F1] cursor-pointer"
                 />
-                <div className="mt-2 flex items-center gap-2">
+                <div className="mt-2.5 flex items-center gap-2">
                   <input
                     aria-label="Hourly labor rate in dollars"
                     type="number"
@@ -291,16 +291,16 @@ export function ScenarioLab({
                         ),
                       })
                     }
-                    className="w-24 rounded border border-stone-300 bg-white px-2 py-1 text-xs text-stone-900"
+                    className="genesis-input w-24 py-1.5 px-2.5 font-mono"
                   />
-                  <span className="text-[11px] text-stone-500">Seed default: $20/hr</span>
+                  <span className="text-[12px] text-[#9C9C9C]">Seed default: $20/hr</span>
                 </div>
               </div>
 
-              <div className="rounded-lg border border-stone-200 bg-stone-50/60 p-3.5">
+              <div className="genesis-panel bg-[#FAFAFA] p-4">
                 <label
                   htmlFor="scenario-baseline-mins"
-                  className="block text-xs font-semibold text-stone-800 mb-1"
+                  className="block text-[13px] font-medium text-[#0A0A0A] mb-1.5"
                 >
                   Current Manual Assessment Minutes / Device
                 </label>
@@ -320,17 +320,17 @@ export function ScenarioLab({
                       ),
                     })
                   }
-                  className="w-full rounded-md border border-stone-300 bg-white px-3 py-1.5 text-sm text-stone-900"
+                  className="genesis-input w-full font-mono"
                 />
-                <span className="mt-1 block text-[11px] text-stone-500">
+                <span className="mt-1.5 block text-[12px] text-[#9C9C9C]">
                   Hypothetical manual baseline (Seed: 12 min)
                 </span>
               </div>
 
-              <div className="rounded-lg border border-stone-200 bg-stone-50/60 p-3.5">
+              <div className="genesis-panel bg-[#FAFAFA] p-4">
                 <label
                   htmlFor="scenario-proposed-mins"
-                  className="block text-xs font-semibold text-stone-800 mb-1"
+                  className="block text-[13px] font-medium text-[#0A0A0A] mb-1.5"
                 >
                   Proposed ReuseFlow Assessment Minutes / Device
                 </label>
@@ -350,17 +350,17 @@ export function ScenarioLab({
                       ),
                     })
                   }
-                  className="w-full rounded-md border border-stone-300 bg-white px-3 py-1.5 text-sm text-stone-900"
+                  className="genesis-input w-full font-mono"
                 />
-                <span className="mt-1 block text-[11px] text-stone-500">
+                <span className="mt-1.5 block text-[12px] text-[#9C9C9C]">
                   Hypothetical structured intake target (Seed: 6 min)
                 </span>
               </div>
 
-              <div className="rounded-lg border border-stone-200 bg-stone-50/60 p-3.5">
+              <div className="genesis-panel bg-[#FAFAFA] p-4">
                 <label
                   htmlFor="scenario-impl-cost"
-                  className="block text-xs font-semibold text-stone-800 mb-1"
+                  className="block text-[13px] font-medium text-[#0A0A0A] mb-1.5"
                 >
                   Estimated One-Time Implementation Cost ($ USD)
                 </label>
@@ -380,17 +380,17 @@ export function ScenarioLab({
                       ),
                     })
                   }
-                  className="w-full rounded-md border border-stone-300 bg-white px-3 py-1.5 text-sm text-stone-900"
+                  className="genesis-input w-full font-mono"
                 />
-                <span className="mt-1 block text-[11px] text-stone-500">
+                <span className="mt-1.5 block text-[12px] text-[#9C9C9C]">
                   Enter pilot training/setup cost for realistic payback
                 </span>
               </div>
 
-              <div className="rounded-lg border border-stone-200 bg-stone-50/60 p-3.5">
+              <div className="genesis-panel bg-[#FAFAFA] p-4">
                 <label
                   htmlFor="scenario-monthly-software"
-                  className="block text-xs font-semibold text-stone-800 mb-1"
+                  className="block text-[13px] font-medium text-[#0A0A0A] mb-1.5"
                 >
                   Monthly Software / Hosting Cost ($ USD)
                 </label>
@@ -410,9 +410,9 @@ export function ScenarioLab({
                       ),
                     })
                   }
-                  className="w-full rounded-md border border-stone-300 bg-white px-3 py-1.5 text-sm text-stone-900"
+                  className="genesis-input w-full font-mono"
                 />
-                <span className="mt-1 block text-[11px] text-stone-500">
+                <span className="mt-1.5 block text-[12px] text-[#9C9C9C]">
                   Subtracted from monthly labor capacity value
                 </span>
               </div>
@@ -420,38 +420,38 @@ export function ScenarioLab({
           </div>
 
           {/* Live Calculated Outputs */}
-          <div className="lg:col-span-5 flex flex-col justify-between rounded-xl border border-teal-900/20 bg-teal-950/5 p-5 space-y-4">
+          <div className="lg:col-span-5 flex flex-col justify-between genesis-panel bg-[#FAFAFA] p-5 space-y-4">
             <div className="space-y-3">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-teal-950">
+              <h4 className="text-[11px] font-medium uppercase tracking-wider text-[#6B6B6B]">
                 Live Scenario Arithmetic Output
               </h4>
 
               <div className="grid grid-cols-2 gap-3">
-                <div className="rounded-lg bg-white border border-stone-200 p-3">
-                  <p className="text-xs text-stone-500">Minutes Saved / Device</p>
-                  <p className="mt-1 text-xl font-bold text-stone-900">
+                <div className="genesis-panel p-3.5">
+                  <p className="text-[12px] text-[#6B6B6B]">Minutes Saved / Device</p>
+                  <p className="mt-1 font-display text-[24px] font-bold text-[#0A0A0A]">
                     {output.minutesSavedPerDevice} min
                   </p>
                 </div>
-                <div className="rounded-lg bg-white border border-stone-200 p-3">
-                  <p className="text-xs text-stone-500">Monthly Hours Reallocated</p>
-                  <p className="mt-1 text-xl font-bold text-teal-900">
+                <div className="genesis-panel p-3.5">
+                  <p className="text-[12px] text-[#6B6B6B]">Monthly Hours Reallocated</p>
+                  <p className="mt-1 font-display text-[24px] font-bold text-[#0A0A0A]">
                     {output.monthlyHoursSaved} hrs/mo
                   </p>
                 </div>
-                <div className="rounded-lg bg-white border border-stone-200 p-3">
-                  <p className="text-xs text-stone-500">Hypothetical Labor Value</p>
-                  <p className="mt-1 text-xl font-bold text-stone-900">
+                <div className="genesis-panel p-3.5">
+                  <p className="text-[12px] text-[#6B6B6B]">Hypothetical Labor Value</p>
+                  <p className="mt-1 font-display text-[24px] font-bold text-[#0A0A0A]">
                     {formatCents(output.monthlyLaborValueCents)}/mo
                   </p>
                 </div>
-                <div className="rounded-lg bg-white border border-stone-200 p-3">
-                  <p className="text-xs text-stone-500">Net Monthly Capacity Value</p>
+                <div className="genesis-panel p-3.5">
+                  <p className="text-[12px] text-[#6B6B6B]">Net Monthly Capacity Value</p>
                   <p
-                    className={`mt-1 text-xl font-bold ${
+                    className={`mt-1 font-display text-[24px] font-bold ${
                       output.monthlyNetValueCents >= 0
-                        ? 'text-emerald-800'
-                        : 'text-red-700'
+                        ? 'text-[#10B981]'
+                        : 'text-[#EF4444]'
                     }`}
                   >
                     {formatCents(output.monthlyNetValueCents)}/mo
@@ -459,20 +459,20 @@ export function ScenarioLab({
                 </div>
               </div>
 
-              <div className="rounded-lg bg-white border border-stone-200 p-3">
-                <p className="text-xs text-stone-500">Simple Payback Estimate</p>
-                <p className="mt-1 text-sm font-bold text-stone-900">
+              <div className="genesis-panel p-3.5">
+                <p className="text-[12px] text-[#6B6B6B]">Simple Payback Estimate</p>
+                <p className="mt-1 text-[14px] font-medium text-[#0A0A0A]">
                   {output.paybackLabel}
                 </p>
               </div>
             </div>
 
-            <div className="rounded-lg border border-amber-300 bg-amber-50/90 p-3 text-xs text-amber-950 space-y-1">
-              <p className="font-semibold flex items-center gap-1.5">
-                <AlertCircle className="h-3.5 w-3.5 text-amber-800 shrink-0" aria-hidden="true" />
+            <div className="rounded-[8px] border border-[#F59E0B]/40 bg-[#F59E0B]/10 p-3.5 text-[12px] text-[#92400E] space-y-1">
+              <p className="font-medium flex items-center gap-1.5 text-[#0A0A0A]">
+                <AlertCircle className="h-3.5 w-3.5 text-[#F59E0B] shrink-0" aria-hidden="true" />
                 Honest Claim Discipline
               </p>
-              <ul className="list-disc pl-4 space-y-0.5 text-[11px] text-amber-900">
+              <ul className="list-disc pl-4 space-y-0.5 text-[12px] text-[#6B6B6B]">
                 <li>Illustrative scenario · not measured organizational performance.</li>
                 <li>Inputs can be edited; estimates depend on assumptions.</li>
                 <li>Labor value is not necessarily cash savings or incremental revenue.</li>
@@ -486,21 +486,21 @@ export function ScenarioLab({
       {onUpdateEngineConfig && (
         <section
           aria-label="Editable Engine Economic Thresholds"
-          className="rounded-xl border border-stone-200 bg-white shadow-2xs overflow-hidden"
+          className="genesis-card overflow-hidden"
         >
-          <div className="border-b border-stone-200 bg-stone-50 px-5 py-3.5 flex items-center justify-between">
+          <div className="border-b border-[#E8E8EC] bg-[#FFFFFF] px-6 py-4 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Sliders className="h-4 w-4 text-teal-800" aria-hidden="true" />
-              <h3 className="text-sm font-bold text-stone-950">
+              <Sliders className="h-4 w-4 text-[#6B6B6B]" aria-hidden="true" />
+              <h3 className="font-display text-[16px] font-bold text-[#0A0A0A]">
                 Configurable Decision Engine Thresholds (v1.0.0 Assumptions)
               </h3>
             </div>
-            <span className="text-xs text-stone-500">Manager-only configuration</span>
+            <span className="text-[12px] text-[#9C9C9C]">Manager-only configuration</span>
           </div>
 
-          <form onSubmit={handleSaveConfig} className="p-5 space-y-4">
+          <form onSubmit={handleSaveConfig} className="p-6 space-y-4">
             {configMsg && (
-              <div className="rounded-md border border-teal-300 bg-teal-50 px-3 py-2 text-xs font-medium text-teal-950">
+              <div className="rounded-[6px] border border-[#10B981]/40 bg-[#10B981]/10 px-3.5 py-2.5 text-[12px] font-medium text-[#065F46]">
                 {configMsg}
               </div>
             )}
@@ -509,7 +509,7 @@ export function ScenarioLab({
               <div>
                 <label
                   htmlFor="cfg-hourly-rate"
-                  className="block text-xs font-semibold text-stone-800 mb-1"
+                  className="block text-[13px] font-medium text-[#0A0A0A] mb-1.5"
                 >
                   Technician Labor Rate ($/hr)
                 </label>
@@ -521,14 +521,14 @@ export function ScenarioLab({
                   disabled={actorRole !== 'manager'}
                   value={editHourlyDollars}
                   onChange={(e) => setEditHourlyDollars(e.target.value)}
-                  className="w-full rounded-lg border border-stone-300 px-3 py-1.5 text-sm text-stone-900 disabled:bg-stone-100"
+                  className="genesis-input w-full font-mono disabled:bg-[#FAFAFA]"
                 />
               </div>
 
               <div>
                 <label
                   htmlFor="cfg-min-margin"
-                  className="block text-xs font-semibold text-stone-800 mb-1"
+                  className="block text-[13px] font-medium text-[#0A0A0A] mb-1.5"
                 >
                   Min Positive Margin ($ USD)
                 </label>
@@ -539,14 +539,14 @@ export function ScenarioLab({
                   disabled={actorRole !== 'manager'}
                   value={editMinMarginDollars}
                   onChange={(e) => setEditMinMarginDollars(e.target.value)}
-                  className="w-full rounded-lg border border-stone-300 px-3 py-1.5 text-sm text-stone-900 disabled:bg-stone-100"
+                  className="genesis-input w-full font-mono disabled:bg-[#FAFAFA]"
                 />
               </div>
 
               <div>
                 <label
                   htmlFor="cfg-min-ram"
-                  className="block text-xs font-semibold text-stone-800 mb-1"
+                  className="block text-[13px] font-medium text-[#0A0A0A] mb-1.5"
                 >
                   Min Laptop RAM Heuristic (GB)
                 </label>
@@ -558,14 +558,14 @@ export function ScenarioLab({
                   disabled={actorRole !== 'manager'}
                   value={editMinRamGb}
                   onChange={(e) => setEditMinRamGb(e.target.value)}
-                  className="w-full rounded-lg border border-stone-300 px-3 py-1.5 text-sm text-stone-900 disabled:bg-stone-100"
+                  className="genesis-input w-full font-mono disabled:bg-[#FAFAFA]"
                 />
               </div>
 
               <div>
                 <label
                   htmlFor="cfg-overhead"
-                  className="block text-xs font-semibold text-stone-800 mb-1"
+                  className="block text-[13px] font-medium text-[#0A0A0A] mb-1.5"
                 >
                   Processing Overhead ($ USD)
                 </label>
@@ -577,19 +577,19 @@ export function ScenarioLab({
                   disabled={actorRole !== 'manager'}
                   value={editOverheadDollars}
                   onChange={(e) => setEditOverheadDollars(e.target.value)}
-                  className="w-full rounded-lg border border-stone-300 px-3 py-1.5 text-sm text-stone-900 disabled:bg-stone-100"
+                  className="genesis-input w-full font-mono disabled:bg-[#FAFAFA]"
                 />
               </div>
             </div>
 
             <div className="flex items-center justify-between pt-2">
-              <p className="text-xs text-stone-500">
+              <p className="text-[12px] text-[#9C9C9C]">
                 Updating thresholds applies to new assessments while preserving historic assessment snapshots.
               </p>
               <button
                 type="submit"
                 disabled={actorRole !== 'manager'}
-                className="inline-flex items-center gap-1.5 rounded-lg bg-teal-800 hover:bg-teal-900 px-4 py-2 text-xs font-semibold text-white disabled:opacity-50 cursor-pointer"
+                className="genesis-btn-primary inline-flex items-center gap-1.5 px-4 py-2 text-[13px] disabled:opacity-50 cursor-pointer"
               >
                 <Save className="h-3.5 w-3.5" aria-hidden="true" />
                 Save Assumptions

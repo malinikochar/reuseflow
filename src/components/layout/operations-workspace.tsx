@@ -277,25 +277,25 @@ export function OperationsWorkspace({
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#f8f9f8] text-stone-900">
+    <div className="min-h-screen flex flex-col bg-[#FAFAFA] text-[#0A0A0A]">
       {isDemo && <DemoModeBanner onReset={handleResetDemo} isResetting={isBusy} />}
 
-      {/* Top Operations Navigation Header */}
-      <header className="no-print sticky top-0 z-20 border-b border-stone-200 bg-white/95 backdrop-blur-xs">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+      {/* Genesis Sticky Top Navigation (56px height, backdrop-blur, 1px border #E8E8EC) */}
+      <header className="no-print sticky top-0 z-20 border-b border-[#E8E8EC] bg-[#FFFFFF]/90 backdrop-blur-md">
+        <div className="max-w-[1280px] mx-auto px-6 min-h-[56px] py-2 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <Link
                 href="/"
-                className="flex items-center gap-2 font-bold text-lg tracking-tight text-stone-950 hover:text-teal-900"
+                className="flex items-center gap-2.5 font-display font-bold text-[18px] tracking-[-0.03em] text-[#0A0A0A] hover:text-[#6366F1] transition-colors"
               >
-                <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-teal-900 text-white">
+                <span className="inline-flex h-8 w-8 items-center justify-center rounded-[6px] bg-[#0A0A0A] text-[#FAFAFA]">
                   <Cpu className="h-4 w-4" aria-hidden="true" />
                 </span>
                 <span>ReuseFlow</span>
               </Link>
-              <span className="hidden sm:inline-block h-4 w-px bg-stone-300" />
-              <span className="text-xs font-medium text-stone-600">
+              <span className="hidden sm:inline-block h-4 w-px bg-[#E8E8EC]" />
+              <span className="text-[13px] font-medium text-[#6B6B6B]">
                 {isDemo
                   ? 'Interactive Public Sandbox (/demo)'
                   : 'Authenticated Operations Workspace (/app)'}
@@ -305,24 +305,27 @@ export function OperationsWorkspace({
             {!isDemo && (
               <Link
                 href="/demo"
-                className="lg:hidden text-xs font-semibold text-teal-800 hover:underline"
+                className="lg:hidden text-[12px] font-medium text-[#6366F1] hover:underline"
               >
                 Switch to /demo
               </Link>
             )}
           </div>
 
-          {/* Primary Navigation Tabs & Role Switcher */}
+          {/* Primary Navigation Chips & Role Switcher */}
           <div className="flex flex-wrap items-center justify-between lg:justify-end gap-2 sm:gap-3">
-            <nav aria-label="Workspace Views" className="flex items-center gap-1 rounded-lg bg-stone-100 p-1 border border-stone-200">
+            <nav
+              aria-label="Workspace Views"
+              className="flex items-center gap-1.5"
+            >
               <button
                 type="button"
                 onClick={() => setActiveTab('inventory')}
                 className={cn(
-                  'inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold transition-colors cursor-pointer',
+                  'inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[12px] font-medium transition-colors cursor-pointer',
                   activeTab === 'inventory'
-                    ? 'bg-white text-teal-950 shadow-2xs'
-                    : 'text-stone-600 hover:text-stone-900'
+                    ? 'bg-[#6366F1] text-[#FAFAFA]'
+                    : 'bg-[#F4F4F6] text-[#6B6B6B] hover:text-[#0A0A0A]'
                 )}
               >
                 <ClipboardList className="h-3.5 w-3.5" aria-hidden="true" />
@@ -333,10 +336,10 @@ export function OperationsWorkspace({
                 type="button"
                 onClick={() => setActiveTab('intake')}
                 className={cn(
-                  'inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold transition-colors cursor-pointer',
+                  'inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[12px] font-medium transition-colors cursor-pointer',
                   activeTab === 'intake'
-                    ? 'bg-white text-teal-950 shadow-2xs'
-                    : 'text-stone-600 hover:text-stone-900'
+                    ? 'bg-[#6366F1] text-[#FAFAFA]'
+                    : 'bg-[#F4F4F6] text-[#6B6B6B] hover:text-[#0A0A0A]'
                 )}
               >
                 <PlusCircle className="h-3.5 w-3.5" aria-hidden="true" />
@@ -347,10 +350,10 @@ export function OperationsWorkspace({
                 type="button"
                 onClick={() => setActiveTab('scenario')}
                 className={cn(
-                  'inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold transition-colors cursor-pointer',
+                  'inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[12px] font-medium transition-colors cursor-pointer',
                   activeTab === 'scenario'
-                    ? 'bg-white text-teal-950 shadow-2xs'
-                    : 'text-stone-600 hover:text-stone-900'
+                    ? 'bg-[#6366F1] text-[#FAFAFA]'
+                    : 'bg-[#F4F4F6] text-[#6B6B6B] hover:text-[#0A0A0A]'
                 )}
               >
                 <Calculator className="h-3.5 w-3.5" aria-hidden="true" />
@@ -358,18 +361,17 @@ export function OperationsWorkspace({
               </button>
             </nav>
 
-            {/* Sandbox Role Switcher (for testing Manager vs Technician vs Viewer permissions) */}
             {isDemo ? (
-              <div className="flex items-center gap-1.5 rounded-lg border border-stone-300 bg-stone-50 px-2.5 py-1 text-xs">
-                <UserCheck className="h-3.5 w-3.5 text-teal-800 shrink-0" aria-hidden="true" />
-                <label htmlFor="demo-role-select" className="text-stone-600 font-medium">
+              <div className="flex items-center gap-1.5 rounded-[6px] border border-[#E8E8EC] bg-[#FAFAFA] px-3 py-1.5 text-[12px]">
+                <UserCheck className="h-3.5 w-3.5 text-[#6B6B6B] shrink-0" aria-hidden="true" />
+                <label htmlFor="demo-role-select" className="text-[#6B6B6B] font-medium">
                   Simulate Role:
                 </label>
                 <select
                   id="demo-role-select"
                   value={demoRole}
                   onChange={(e) => setDemoRole(e.target.value as UserRole)}
-                  className="bg-transparent font-bold text-stone-900 focus:outline-none cursor-pointer"
+                  className="bg-transparent font-medium text-[#0A0A0A] focus:outline-none cursor-pointer"
                 >
                   <option value="manager">Manager (Can Approve & Verify)</option>
                   <option value="technician">Technician (Intake & Assess Only)</option>
@@ -377,10 +379,10 @@ export function OperationsWorkspace({
                 </select>
               </div>
             ) : (
-              <div className="flex items-center gap-2 rounded-lg border border-stone-200 bg-stone-50 px-3 py-1.5 text-xs">
-                <Lock className="h-3.5 w-3.5 text-teal-800" aria-hidden="true" />
-                <span className="font-semibold text-stone-800">{activeActor.name}</span>
-                <span className="rounded bg-teal-900/10 px-1.5 py-0.5 text-[10px] font-bold uppercase text-teal-900">
+              <div className="flex items-center gap-2 rounded-[6px] border border-[#E8E8EC] bg-[#FAFAFA] px-3 py-1.5 text-[12px]">
+                <Lock className="h-3.5 w-3.5 text-[#6B6B6B]" aria-hidden="true" />
+                <span className="font-medium text-[#0A0A0A]">{activeActor.name}</span>
+                <span className="rounded-full bg-[#F4F4F6] px-2 py-0.5 text-[11px] uppercase text-[#6B6B6B]">
                   {activeActor.role}
                 </span>
               </div>
@@ -389,21 +391,21 @@ export function OperationsWorkspace({
         </div>
       </header>
 
-      {/* Main Content Area */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 space-y-6">
+      {/* Main Content Area (1280px max width, 24px horizontal padding) */}
+      <main className="flex-1 max-w-[1280px] w-full mx-auto px-6 py-8 space-y-6">
         {toastMessage && (
           <div
             role="status"
-            className="no-print flex items-center justify-between gap-3 rounded-lg border border-teal-300 bg-teal-50 px-4 py-3 text-xs sm:text-sm font-medium text-teal-950 shadow-2xs"
+            className="no-print flex items-center justify-between gap-3 rounded-[8px] border border-[#10B981]/40 bg-[#10B981]/10 px-4 py-3 text-[13px] font-medium text-[#065F46]"
           >
             <span className="flex items-center gap-2">
-              <CheckCircle2 className="h-4 w-4 text-teal-800 shrink-0" aria-hidden="true" />
+              <CheckCircle2 className="h-4 w-4 text-[#10B981] shrink-0" aria-hidden="true" />
               {toastMessage}
             </span>
             <button
               type="button"
               onClick={() => setToastMessage(null)}
-              className="text-xs font-semibold text-teal-800 hover:underline cursor-pointer"
+              className="text-[12px] font-medium text-[#065F46] hover:underline cursor-pointer"
             >
               Dismiss
             </button>
@@ -428,10 +430,10 @@ export function OperationsWorkspace({
               <div className="space-y-6">
                 <div className="no-print flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                   <div>
-                    <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-stone-950">
+                    <h1 className="font-display text-[24px] sm:text-[32px] font-bold tracking-[-0.03em] text-[#0A0A0A]">
                       Device Refurbishment Triage & Decision Queue
                     </h1>
-                    <p className="text-xs sm:text-sm text-stone-600">
+                    <p className="text-[14px] text-[#6B6B6B]">
                       Standardized intake, versioned cost/margin evaluation, safety quarantine gates, and human-approved workflow transitions.
                     </p>
                   </div>
@@ -440,7 +442,7 @@ export function OperationsWorkspace({
                       type="button"
                       onClick={() => setActiveTab('intake')}
                       disabled={activeActor.role === 'viewer'}
-                      className="inline-flex items-center gap-1.5 rounded-lg bg-teal-800 hover:bg-teal-900 px-4 py-2.5 text-xs sm:text-sm font-semibold text-white shadow-xs transition-colors disabled:opacity-50 cursor-pointer"
+                      className="genesis-btn-primary inline-flex items-center gap-2 px-4 py-2.5 text-[14px] disabled:opacity-50 cursor-pointer"
                     >
                       <PlusCircle className="h-4 w-4" aria-hidden="true" />
                       New Device Intake
@@ -457,7 +459,7 @@ export function OperationsWorkspace({
                 </div>
 
                 {/* Filters & Inventory Table */}
-                <div className="no-print space-y-3">
+                <div className="no-print space-y-4">
                   <DeviceFiltersBar
                     filters={filters}
                     onChange={setFilters}
@@ -485,45 +487,49 @@ export function OperationsWorkspace({
                 {selectedDevice && (
                   <div
                     ref={detailPanelRef}
-                    className="pt-2 border-t-2 border-stone-300 space-y-5"
+                    className="pt-4 border-t border-[#E8E8EC] space-y-5"
                   >
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 bg-white rounded-xl border border-stone-200 px-5 py-4 shadow-2xs">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 genesis-card px-6 py-4">
                       <div>
                         <div className="flex flex-wrap items-center gap-2.5">
-                          <span className="font-mono text-sm font-bold text-teal-900 bg-teal-50 border border-teal-200 rounded px-2 py-0.5">
+                          <span className="font-mono text-[12px] font-medium text-[#0A0A0A] bg-[#FAFAFA] border border-[#E8E8EC] rounded-[4px] px-2.5 py-0.5">
                             {selectedDevice.assetTag}
                           </span>
-                          <h2 className="text-lg font-bold text-stone-950">
+                          <h2 className="font-display text-[20px] font-bold text-[#0A0A0A]">
                             {selectedDevice.brand} {selectedDevice.model}
                           </h2>
                           <WorkflowStatusBadge status={selectedDevice.status} />
                         </div>
-                        <p className="mt-1 text-xs text-stone-600">
+                        <p className="mt-1 text-[13px] text-[#6B6B6B]">
                           Category:{' '}
-                          <strong className="capitalize">{selectedDevice.category}</strong> ·
-                          RAM:{' '}
-                          <strong>
+                          <span className="font-medium text-[#0A0A0A] capitalize">
+                            {selectedDevice.category}
+                          </span>{' '}
+                          · RAM:{' '}
+                          <span className="font-mono text-[#0A0A0A]">
                             {selectedDevice.ramGb !== null
                               ? `${selectedDevice.ramGb} GB`
                               : 'Unrecorded'}
-                          </strong>{' '}
+                          </span>{' '}
                           · Storage:{' '}
-                          <strong>
+                          <span className="font-mono text-[#0A0A0A]">
                             {selectedDevice.storagePresent
                               ? `${selectedDevice.storageGb ?? '?'} GB Installed`
                               : 'None'}
-                          </strong>{' '}
+                          </span>{' '}
                           · Condition:{' '}
-                          <strong className="capitalize">{selectedDevice.condition}</strong>
+                          <span className="font-medium text-[#0A0A0A] capitalize">
+                            {selectedDevice.condition}
+                          </span>
                         </p>
                       </div>
-                      <span className="text-xs text-stone-500">
+                      <span className="text-[12px] text-[#9C9C9C]">
                         Record ID: <code className="font-mono">{selectedDevice.id}</code>
                       </span>
                     </div>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-                      <div className="lg:col-span-7 space-y-5">
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                      <div className="lg:col-span-7 space-y-6">
                         <AssessmentPanel
                           device={selectedDevice}
                           engineConfig={engineConfig}
@@ -533,7 +539,7 @@ export function OperationsWorkspace({
                         />
                       </div>
 
-                      <div className="lg:col-span-5 space-y-5">
+                      <div className="lg:col-span-5 space-y-6">
                         <WorkflowDecisionControls
                           device={selectedDevice}
                           actorRole={activeActor.role}
@@ -581,22 +587,22 @@ export function OperationsWorkspace({
       </main>
 
       {/* Footer with explicit safety and case-alignment disclosures */}
-      <footer className="no-print border-t border-stone-200 bg-white mt-12 py-5 px-4 sm:px-6 text-xs text-stone-600">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+      <footer className="no-print border-t border-[#E8E8EC] bg-[#FFFFFF] mt-16 py-6 px-6 text-[12px] text-[#6B6B6B]">
+        <div className="max-w-[1280px] mx-auto flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div className="flex items-center gap-2">
-            <ShieldCheck className="h-4 w-4 text-teal-800 shrink-0" aria-hidden="true" />
+            <ShieldCheck className="h-4 w-4 text-[#10B981] shrink-0" aria-hidden="true" />
             <span>
-              <strong>Safety & Data Integrity:</strong> ReuseFlow provides decision support only. It never performs certified data wiping or automated device disposal.
+              <strong className="text-[#0A0A0A]">Safety & Data Integrity:</strong> ReuseFlow provides decision support only. It never performs certified data wiping or automated device disposal.
             </span>
           </div>
-          <div className="flex flex-wrap items-center gap-4 text-stone-500">
-            <Link href="/" className="hover:text-stone-900 underline">
+          <div className="flex flex-wrap items-center gap-4 text-[#6B6B6B]">
+            <Link href="/" className="hover:text-[#6366F1] underline">
               Overview
             </Link>
-            <Link href="/demo" className="hover:text-stone-900 underline">
+            <Link href="/demo" className="hover:text-[#6366F1] underline">
               Public Sandbox (/demo)
             </Link>
-            <Link href="/app" className="hover:text-stone-900 underline">
+            <Link href="/app" className="hover:text-[#6366F1] underline">
               Staff Workspace (/app)
             </Link>
           </div>
