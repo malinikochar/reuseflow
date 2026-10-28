@@ -28,9 +28,7 @@ export default function LandingPage() {
             — Proposed internal refurbishment decision-support workflow.
           </span>
           <span className="text-[#9C9C9C]">
-            Styled with{' '}
-            <span className="font-mono font-medium text-[#20970B]">DESIGN.md</span>{' '}
-            (chef/genesis) · All sample metrics are fictional
+            Not an official Free Geek system · All sample metrics are fictional
           </span>
         </div>
       </div>
@@ -270,8 +268,7 @@ export default function LandingPage() {
       <footer className="border-t border-[#E8E8EC] bg-[#FFFFFF] text-[#6B6B6B] py-6 px-6 text-[12px]">
         <div className="max-w-[1280px] mx-auto flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <span>
-            ReuseFlow · FUSE Society Blueprint 2026 Hackathon MVP · Design System:{' '}
-            <span className="font-mono font-medium text-[#20970B]">DESIGN.md</span> (Genesis)
+            ReuseFlow · FUSE Society Blueprint 2026 Hackathon MVP · Decision-Support Prototype
           </span>
           <div className="flex items-center gap-4">
             <Link href="/demo" className="text-[#6366F1] hover:underline">
