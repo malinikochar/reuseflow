@@ -5,10 +5,13 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
   ArrowRight,
+  CheckCircle2,
   FlaskConical,
   KeyRound,
   Loader2,
   Lock,
+  Mail,
+  RotateCcw,
   Shield,
   ShieldCheck,
   Sparkles,
@@ -17,10 +20,15 @@ import {
 } from 'lucide-react';
 import { createSupabaseBrowserClient } from '@/lib/supabase/client';
 import { getSupabasePublicConfig } from '@/lib/supabase/config';
+import {
+  requestPasswordResetServerAction,
+  resetPasswordWithCodeServerAction,
+  sendWelcomeEmailOnRegisterServerAction,
+} from '@/lib/actions/profile-admin-actions';
 import { ReuseFlowLogo } from '@/components/shared/reuseflow-logo';
 import { UserRole } from '@/types/domain';
 
-type AuthMode = 'signin' | 'register';
+type AuthMode = 'signin' | 'register' | 'reset';
 
 const ONE_CLICK_ACCOUNTS: Array<{
   label: string;
@@ -71,14 +79,37 @@ export default function LoginPage() {
   const [jobTitle, setJobTitle] = useState('Refurbishment Specialist');
   const [registerRole, setRegisterRole] = useState<UserRole>('technician');
 
+  // Forgot Password / Recovery state
+  const [resetStep, setResetStep] = useState<'request' | 'verify'>('request');
+  const [recoveryCode, setRecoveryCode] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmNewPassword, setConfirmNewPassword] = useState('');
+
   const [isLoading, setIsLoading] = useState(false);
   const [activeQuickEmail, setActiveQuickEmail] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [infoMessage, setInfoMessage] = useState<string | null>(null);
 
-  // Warm the public /demo sandbox route bundle on mount (never prefetch /app while unauthenticated)
+  // Warm the public /demo sandbox route bundle and check URL params for 1-click email password reset
   useEffect(() => {
     router.prefetch('/demo');
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const qMode = params.get('mode');
+      const qEmail = params.get('email');
+      const qCode = params.get('code');
+      if (qMode === 'reset') {
+        setMode('reset');
+        if (qEmail) setEmail(qEmail);
+        if (qCode) {
+          setRecoveryCode(qCode);
+          setResetStep('verify');
+          setInfoMessage(
+            'Recovery code pre-filled from your email link. Enter your new password below.'
+          );
+        }
+      }
+    }
   }, [router]);
 
   const executeSignIn = async (targetEmail: string, targetPassword: string) => {
@@ -125,6 +156,80 @@ export default function LoginPage() {
     await executeSignIn(acctEmail, acctPassword);
   };
 
+  const handleRequestResetCode = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMessage(null);
+    setInfoMessage(null);
+    setIsLoading(true);
+    try {
+      const res = await requestPasswordResetServerAction({ email });
+      if (!res.ok) {
+        setErrorMessage(res.message);
+        return;
+      }
+      setResetStep('verify');
+      setInfoMessage(
+        `A 6-digit recovery code and 1-click reset link have been delivered to ${res.data.email} via Resend.`
+      );
+    } catch {
+      setErrorMessage('Unable to send password recovery email right now.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleVerifyResetCode = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMessage(null);
+    setInfoMessage(null);
+
+    if (newPassword.length < 6) {
+      setErrorMessage('New password must be at least 6 characters.');
+      return;
+    }
+    if (newPassword !== confirmNewPassword) {
+      setErrorMessage('New password and confirmation password do not match.');
+      return;
+    }
+
+    setIsLoading(true);
+    let navigating = false;
+    try {
+      const res = await resetPasswordWithCodeServerAction({
+        email,
+        code: recoveryCode,
+        newPassword,
+      });
+      if (!res.ok) {
+        setErrorMessage(res.message);
+        return;
+      }
+
+      const supabase = createSupabaseBrowserClient();
+      if (supabase) {
+        const signInRes = await supabase.auth.signInWithPassword({
+          email: email.trim().toLowerCase(),
+          password: newPassword,
+        });
+        if (!signInRes.error) {
+          navigating = true;
+          window.location.assign('/app');
+          return;
+        }
+      }
+
+      setInfoMessage('Password updated! You can now sign in with your new password.');
+      setPassword(newPassword);
+      setMode('signin');
+    } catch {
+      setErrorMessage('Unable to complete password reset.');
+    } finally {
+      if (!navigating) {
+        setIsLoading(false);
+      }
+    }
+  };
+
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
@@ -145,14 +250,18 @@ export default function LoginPage() {
     let navigating = false;
     try {
       const cleanEmail = email.trim().toLowerCase();
+      const cleanName = displayName.trim();
+      const cleanDept = department.trim();
+      const cleanTitle = jobTitle.trim();
+
       const { data, error } = await supabase.auth.signUp({
         email: cleanEmail,
         password,
         options: {
           data: {
-            display_name: displayName.trim(),
-            department: department.trim(),
-            job_title: jobTitle.trim(),
+            display_name: cleanName,
+            department: cleanDept,
+            job_title: cleanTitle,
             role: registerRole,
           },
         },
@@ -162,6 +271,15 @@ export default function LoginPage() {
         setErrorMessage(error.message);
         return;
       }
+
+      // Send Welcome Email via Resend & provision isolated user workspace on the server
+      await sendWelcomeEmailOnRegisterServerAction({
+        email: cleanEmail,
+        displayName: cleanName,
+        department: cleanDept,
+        jobTitle: cleanTitle,
+        role: registerRole,
+      });
 
       // If session is returned immediately (auto-confirmed via trigger), redirect to /app
       if (data.session) {
@@ -178,7 +296,7 @@ export default function LoginPage() {
 
       if (signInRes.error) {
         setInfoMessage(
-          'Account registered! Please sign in with your email and password.'
+          `Account registered and welcome email sent to ${cleanEmail}! Please sign in below.`
         );
         setMode('signin');
         return;
@@ -348,10 +466,10 @@ export default function LoginPage() {
             </div>
           </div>
 
-          {/* Right Column: Sign In & User Registration Card */}
+          {/* Right Column: Sign In, User Registration & Forgot Password Card */}
           <div className="lg:col-span-6 genesis-card p-6 space-y-5">
-            {/* Mode Switcher Tabs */}
-            <div className="grid grid-cols-2 gap-1.5 p-1 rounded-xl bg-[#F2F2F7] border border-[#E5E5EA]">
+            {/* 3-Mode Switcher Tabs */}
+            <div className="grid grid-cols-3 gap-1.5 p-1 rounded-xl bg-[#F2F2F7] border border-[#E5E5EA]">
               <button
                 type="button"
                 onClick={() => {
@@ -359,13 +477,13 @@ export default function LoginPage() {
                   setErrorMessage(null);
                   setInfoMessage(null);
                 }}
-                className={`min-h-[42px] rounded-lg text-[13px] font-medium inline-flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                className={`min-h-[42px] rounded-lg text-[12px] sm:text-[13px] font-medium inline-flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
                   mode === 'signin'
                     ? 'bg-[#FFFFFF] text-[#1D1D1F] shadow-xs'
                     : 'text-[#6E6E73] hover:text-[#1D1D1F]'
                 }`}
               >
-                <KeyRound className="h-4 w-4 text-[#6366F1]" aria-hidden="true" />
+                <KeyRound className="h-3.5 w-3.5 text-[#6366F1]" aria-hidden="true" />
                 Staff Sign In
               </button>
               <button
@@ -375,31 +493,60 @@ export default function LoginPage() {
                   setErrorMessage(null);
                   setInfoMessage(null);
                 }}
-                className={`min-h-[42px] rounded-lg text-[13px] font-medium inline-flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                className={`min-h-[42px] rounded-lg text-[12px] sm:text-[13px] font-medium inline-flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
                   mode === 'register'
                     ? 'bg-[#FFFFFF] text-[#1D1D1F] shadow-xs'
                     : 'text-[#6E6E73] hover:text-[#1D1D1F]'
                 }`}
               >
-                <UserPlus className="h-4 w-4 text-[#6366F1]" aria-hidden="true" />
+                <UserPlus className="h-3.5 w-3.5 text-[#6366F1]" aria-hidden="true" />
                 Create Account
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setMode('reset');
+                  setErrorMessage(null);
+                  setInfoMessage(null);
+                }}
+                className={`min-h-[42px] rounded-lg text-[12px] sm:text-[13px] font-medium inline-flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                  mode === 'reset'
+                    ? 'bg-[#FFFFFF] text-[#1D1D1F] shadow-xs'
+                    : 'text-[#6E6E73] hover:text-[#1D1D1F]'
+                }`}
+              >
+                <RotateCcw className="h-3.5 w-3.5 text-[#6366F1]" aria-hidden="true" />
+                Forgot Password
               </button>
             </div>
 
             <div className="space-y-1">
               <div className="inline-flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wider text-[#6E6E73]">
-                <Lock className="h-3.5 w-3.5 text-[#6366F1]" aria-hidden="true" />
-                Supabase SSR Cookie Authentication
+                {mode === 'reset' ? (
+                  <>
+                    <Mail className="h-3.5 w-3.5 text-[#6366F1]" aria-hidden="true" />
+                    Resend Email Recovery · Verified Sender (info@ensure.in)
+                  </>
+                ) : (
+                  <>
+                    <Lock className="h-3.5 w-3.5 text-[#6366F1]" aria-hidden="true" />
+                    Supabase SSR Cookie Authentication · Separate User Workspaces
+                  </>
+                )}
               </div>
               <h1 className="font-display text-[24px] font-bold text-[#1D1D1F]">
                 {mode === 'signin'
                   ? 'Staff Operations Sign In (/app)'
-                  : 'Register New Staff Account'}
+                  : mode === 'register'
+                    ? 'Register New Staff Account'
+                    : 'Reset Your Account Password'}
               </h1>
               <p className="text-[13px] text-[#6E6E73]">
                 {mode === 'signin'
                   ? 'Sign in with your organization account or use the One-Click Demo Login buttons.'
-                  : 'Create a live Supabase account with automatic profile provisioning and role assignment.'}
+                  : mode === 'register'
+                    ? 'Creates your separate personal workspace in Supabase and sends a Welcome Email via Resend.'
+                    : 'Receive a 6-digit recovery code and 1-click reset link by email to set a new password.'}
               </p>
             </div>
 
@@ -421,9 +568,10 @@ export default function LoginPage() {
             {infoMessage && (
               <div
                 role="status"
-                className="rounded-xl border border-[#10B981]/40 bg-[#10B981]/10 p-3 text-[12px] font-medium text-[#065F46]"
+                className="rounded-xl border border-[#10B981]/40 bg-[#10B981]/10 p-3 text-[12px] font-medium text-[#065F46] flex items-start gap-2"
               >
-                {infoMessage}
+                <CheckCircle2 className="h-4 w-4 text-[#10B981] shrink-0 mt-0.5" aria-hidden="true" />
+                <span>{infoMessage}</span>
               </div>
             )}
 
@@ -436,142 +584,325 @@ export default function LoginPage() {
               </div>
             )}
 
-            <form onSubmit={handleFormSubmit} className="space-y-4">
-              {mode === 'register' && (
-                <>
+            {mode === 'reset' ? (
+              resetStep === 'request' ? (
+                <form onSubmit={handleRequestResetCode} className="space-y-4">
                   <div>
                     <label
-                      htmlFor="register-display-name"
+                      htmlFor="reset-email"
                       className="block text-[13px] font-medium text-[#1D1D1F] mb-1.5"
                     >
-                      Full Name
+                      Registered Staff Email Address
                     </label>
                     <input
-                      id="register-display-name"
+                      id="reset-email"
+                      type="email"
+                      required
+                      autoComplete="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="you@example.com"
+                      className="genesis-input w-full min-h-[44px]"
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={isLoading}
+                    className="genesis-btn-primary w-full min-h-[44px] inline-flex items-center justify-center gap-2 px-4 py-2.5 text-[14px] disabled:opacity-50 cursor-pointer"
+                  >
+                    {isLoading ? (
+                      <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                    ) : (
+                      <Mail className="h-4 w-4" aria-hidden="true" />
+                    )}
+                    {isLoading
+                      ? 'Sending Recovery Email...'
+                      : 'Send Recovery Code via Email'}
+                  </button>
+
+                  <div className="flex items-center justify-between text-[12px] text-[#6E6E73]">
+                    <button
+                      type="button"
+                      onClick={() => setResetStep('verify')}
+                      className="text-[#6366F1] hover:underline cursor-pointer"
+                    >
+                      Already have a 6-digit recovery code?
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setMode('signin')}
+                      className="hover:text-[#1D1D1F] cursor-pointer"
+                    >
+                      ← Back to Sign In
+                    </button>
+                  </div>
+                </form>
+              ) : (
+                <form onSubmit={handleVerifyResetCode} className="space-y-4">
+                  <div>
+                    <label
+                      htmlFor="verify-reset-email"
+                      className="block text-[13px] font-medium text-[#1D1D1F] mb-1.5"
+                    >
+                      Account Email Address
+                    </label>
+                    <input
+                      id="verify-reset-email"
+                      type="email"
+                      required
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="genesis-input w-full min-h-[44px]"
+                    />
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="verify-reset-code"
+                      className="block text-[13px] font-medium text-[#1D1D1F] mb-1.5"
+                    >
+                      6-Digit Email Recovery Code
+                    </label>
+                    <input
+                      id="verify-reset-code"
                       type="text"
                       required
-                      minLength={2}
-                      maxLength={80}
-                      value={displayName}
-                      onChange={(e) => setDisplayName(e.target.value)}
-                      placeholder="Taylor Brooks"
-                      className="genesis-input w-full min-h-[44px]"
+                      minLength={6}
+                      maxLength={12}
+                      value={recoveryCode}
+                      onChange={(e) => setRecoveryCode(e.target.value)}
+                      placeholder="123456"
+                      className="genesis-input w-full min-h-[44px] font-mono tracking-widest text-[16px]"
                     />
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
                       <label
-                        htmlFor="register-department"
+                        htmlFor="verify-new-password"
                         className="block text-[13px] font-medium text-[#1D1D1F] mb-1.5"
                       >
-                        Department
+                        New Password
                       </label>
                       <input
-                        id="register-department"
-                        type="text"
+                        id="verify-new-password"
+                        type="password"
                         required
-                        value={department}
-                        onChange={(e) => setDepartment(e.target.value)}
+                        minLength={6}
+                        autoComplete="new-password"
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        placeholder="Min 6 characters"
                         className="genesis-input w-full min-h-[44px]"
                       />
                     </div>
                     <div>
                       <label
-                        htmlFor="register-role"
+                        htmlFor="verify-confirm-password"
                         className="block text-[13px] font-medium text-[#1D1D1F] mb-1.5"
                       >
-                        Initial Role (Self-Signup)
+                        Confirm New Password
                       </label>
-                      <select
-                        id="register-role"
-                        value={registerRole}
-                        onChange={(e) => {
-                          const r = e.target.value as UserRole;
-                          setRegisterRole(r);
-                          setJobTitle(
-                            r === 'technician'
-                              ? 'Refurbishment Technician'
-                              : 'Impact Auditor'
-                          );
-                        }}
+                      <input
+                        id="verify-confirm-password"
+                        type="password"
+                        required
+                        minLength={6}
+                        autoComplete="new-password"
+                        value={confirmNewPassword}
+                        onChange={(e) => setConfirmNewPassword(e.target.value)}
+                        placeholder="Repeat new password"
                         className="genesis-input w-full min-h-[44px]"
-                      >
-                        <option value="technician">Technician / Staff</option>
-                        <option value="viewer">Viewer / Auditor</option>
-                      </select>
+                      />
                     </div>
                   </div>
-                </>
-              )}
 
-              <div>
-                <label
-                  htmlFor="login-email"
-                  className="block text-[13px] font-medium text-[#1D1D1F] mb-1.5"
-                >
-                  Staff Email Address
-                </label>
-                <input
-                  id="login-email"
-                  type="email"
-                  required
-                  autoComplete="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="staff@reuseflow.org"
-                  className="genesis-input w-full min-h-[44px]"
-                />
-              </div>
+                  <button
+                    type="submit"
+                    disabled={isLoading}
+                    className="genesis-btn-primary w-full min-h-[44px] inline-flex items-center justify-center gap-2 px-4 py-2.5 text-[14px] disabled:opacity-50 cursor-pointer"
+                  >
+                    {isLoading ? (
+                      <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                    ) : (
+                      <KeyRound className="h-4 w-4" aria-hidden="true" />
+                    )}
+                    {isLoading
+                      ? 'Updating Password & Signing In...'
+                      : 'Verify Code & Update Password'}
+                  </button>
 
-              <div>
-                <label
-                  htmlFor="login-password"
-                  className="block text-[13px] font-medium text-[#1D1D1F] mb-1.5"
-                >
-                  Password
-                </label>
-                <input
-                  id="login-password"
-                  type="password"
-                  required
-                  minLength={6}
-                  autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="genesis-input w-full min-h-[44px]"
-                />
-              </div>
+                  <div className="flex items-center justify-between text-[12px] text-[#6E6E73]">
+                    <button
+                      type="button"
+                      onClick={() => setResetStep('request')}
+                      className="text-[#6366F1] hover:underline cursor-pointer"
+                    >
+                      Resend recovery code
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setMode('signin')}
+                      className="hover:text-[#1D1D1F] cursor-pointer"
+                    >
+                      ← Back to Sign In
+                    </button>
+                  </div>
+                </form>
+              )
+            ) : (
+              <form onSubmit={handleFormSubmit} className="space-y-4">
+                {mode === 'register' && (
+                  <>
+                    <div>
+                      <label
+                        htmlFor="register-display-name"
+                        className="block text-[13px] font-medium text-[#1D1D1F] mb-1.5"
+                      >
+                        Full Name
+                      </label>
+                      <input
+                        id="register-display-name"
+                        type="text"
+                        required
+                        minLength={2}
+                        maxLength={80}
+                        value={displayName}
+                        onChange={(e) => setDisplayName(e.target.value)}
+                        placeholder="Taylor Brooks"
+                        className="genesis-input w-full min-h-[44px]"
+                      />
+                    </div>
 
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="genesis-btn-primary w-full min-h-[44px] inline-flex items-center justify-center gap-2 px-4 py-2.5 text-[14px] disabled:opacity-50 cursor-pointer"
-              >
-                {isLoading ? (
-                  <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
-                ) : mode === 'signin' ? (
-                  <KeyRound className="h-4 w-4" aria-hidden="true" />
-                ) : (
-                  <UserPlus className="h-4 w-4" aria-hidden="true" />
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label
+                          htmlFor="register-department"
+                          className="block text-[13px] font-medium text-[#1D1D1F] mb-1.5"
+                        >
+                          Department
+                        </label>
+                        <input
+                          id="register-department"
+                          type="text"
+                          required
+                          value={department}
+                          onChange={(e) => setDepartment(e.target.value)}
+                          className="genesis-input w-full min-h-[44px]"
+                        />
+                      </div>
+                      <div>
+                        <label
+                          htmlFor="register-role"
+                          className="block text-[13px] font-medium text-[#1D1D1F] mb-1.5"
+                        >
+                          Initial Role (Self-Signup)
+                        </label>
+                        <select
+                          id="register-role"
+                          value={registerRole}
+                          onChange={(e) => {
+                            const r = e.target.value as UserRole;
+                            setRegisterRole(r);
+                            setJobTitle(
+                              r === 'technician'
+                                ? 'Refurbishment Technician'
+                                : 'Impact Auditor'
+                            );
+                          }}
+                          className="genesis-input w-full min-h-[44px]"
+                        >
+                          <option value="technician">Technician / Staff</option>
+                          <option value="viewer">Viewer / Auditor</option>
+                        </select>
+                      </div>
+                    </div>
+                  </>
                 )}
-                {mode === 'signin'
-                  ? isLoading
-                    ? 'Opening /app Workspace...'
-                    : 'Sign In to /app'
-                  : isLoading
-                    ? 'Creating Staff Account...'
-                    : 'Create Account & Enter /app'}
-              </button>
-            </form>
+
+                <div>
+                  <label
+                    htmlFor="login-email"
+                    className="block text-[13px] font-medium text-[#1D1D1F] mb-1.5"
+                  >
+                    Staff Email Address
+                  </label>
+                  <input
+                    id="login-email"
+                    type="email"
+                    required
+                    autoComplete="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="staff@reuseflow.org"
+                    className="genesis-input w-full min-h-[44px]"
+                  />
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label
+                      htmlFor="login-password"
+                      className="block text-[13px] font-medium text-[#1D1D1F]"
+                    >
+                      Password
+                    </label>
+                    {mode === 'signin' && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setMode('reset');
+                          setResetStep('request');
+                          setErrorMessage(null);
+                          setInfoMessage(null);
+                        }}
+                        className="text-[12px] font-medium text-[#6366F1] hover:text-[#4F46E5] hover:underline cursor-pointer"
+                      >
+                        Forgot Password?
+                      </button>
+                    )}
+                  </div>
+                  <input
+                    id="login-password"
+                    type="password"
+                    required
+                    minLength={6}
+                    autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className="genesis-input w-full min-h-[44px]"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="genesis-btn-primary w-full min-h-[44px] inline-flex items-center justify-center gap-2 px-4 py-2.5 text-[14px] disabled:opacity-50 cursor-pointer"
+                >
+                  {isLoading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                  ) : mode === 'signin' ? (
+                    <KeyRound className="h-4 w-4" aria-hidden="true" />
+                  ) : (
+                    <UserPlus className="h-4 w-4" aria-hidden="true" />
+                  )}
+                  {mode === 'signin'
+                    ? isLoading
+                      ? 'Opening /app Workspace...'
+                      : 'Sign In to /app'
+                    : isLoading
+                      ? 'Creating Account & Sending Welcome Email...'
+                      : 'Create Account & Enter /app'}
+                </button>
+              </form>
+            )}
 
             <div className="pt-3 border-t border-[#E5E5EA] flex items-center gap-2 text-[12px] text-[#6E6E73]">
               <ShieldCheck className="h-4 w-4 text-[#10B981] shrink-0" aria-hidden="true" />
               <span>
-                Role permissions (<code className="font-mono text-[#1D1D1F]">manager</code>,{' '}
-                <code className="font-mono text-[#1D1D1F]">technician</code>,{' '}
-                <code className="font-mono text-[#1D1D1F]">viewer</code>) are enforced server-side via Postgres Row-Level Security.
+                Each registered user gets an isolated account workspace in Postgres (<code className="font-mono text-[#1D1D1F]">created_by = auth.uid()</code>) with welcome &amp; recovery emails powered by Resend.
               </span>
             </div>
           </div>

@@ -6,7 +6,10 @@ import {
   CheckCircle2,
   Database,
   KeyRound,
+  Lock,
   Mail,
+  MapPin,
+  Phone,
   RefreshCw,
   Search,
   Shield,
@@ -25,10 +28,12 @@ import {
 import { ActorContext } from '@/lib/repositories/types';
 import {
   adminUpdateUserProfileServerAction,
+  changeMyPasswordServerAction,
   getAdminSystemOverviewServerAction,
   getMyProfileServerAction,
   updateMyProfileServerAction,
 } from '@/lib/actions/profile-admin-actions';
+import { createSupabaseBrowserClient } from '@/lib/supabase/client';
 import { EmailSummaryPanel } from '@/components/analytics/email-summary-card';
 
 const DEMO_PROFILES: UserProfile[] = [
@@ -38,6 +43,9 @@ const DEMO_PROFILES: UserProfile[] = [
     displayName: 'Morgan Chen (Operations Manager & Admin)',
     department: 'Refurbishment Governance & Admin',
     jobTitle: 'Refurbishment Operations Manager',
+    phone: '+1 (503) 555-0140',
+    location: 'Portland Central Triage Hub',
+    bio: 'Leads refurbishment margin governance, safety quarantine sign-offs, and NIST 800-88 audit compliance.',
     role: 'manager',
     createdAt: '2026-10-28T08:00:00.000Z',
     updatedAt: '2026-10-28T09:30:00.000Z',
@@ -48,6 +56,9 @@ const DEMO_PROFILES: UserProfile[] = [
     displayName: 'Alex Rivera (Senior Bench Technician)',
     department: 'Diagnostics & Triage Bench',
     jobTitle: 'Senior Refurbishment Technician',
+    phone: '+1 (503) 555-0182',
+    location: 'Main Refurbishment Bench #2',
+    bio: 'Specializes in ThinkPad/Latitude board diagnostics, battery safety screening, and external drive wipe verification.',
     role: 'technician',
     createdAt: '2026-10-28T08:15:00.000Z',
     updatedAt: '2026-10-28T10:15:00.000Z',
@@ -58,6 +69,9 @@ const DEMO_PROFILES: UserProfile[] = [
     displayName: 'Jordan Lee (Impact & Audit Analyst)',
     department: 'Sustainability & Audit',
     jobTitle: 'Circular Impact Analyst',
+    phone: '+1 (503) 555-0199',
+    location: 'Operations Analytics Office',
+    bio: 'Audits refurbishment yield, cost recovery waterfalls, and Scenario Lab capacity models.',
     role: 'viewer',
     createdAt: '2026-10-28T08:30:00.000Z',
     updatedAt: '2026-10-28T11:00:00.000Z',
@@ -102,9 +116,21 @@ export function UserProfilePanel({
   const [displayName, setDisplayName] = useState(actor.name);
   const [department, setDepartment] = useState('Refurbishment Operations');
   const [jobTitle, setJobTitle] = useState('Refurbishment Specialist');
+  const [phone, setPhone] = useState('');
+  const [location, setLocation] = useState('Main Refurbishment Bench');
+  const [bio, setBio] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [feedback, setFeedback] = useState<{
+    type: 'success' | 'error';
+    text: string;
+  } | null>(null);
+
+  // Password Change State
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [passwordFeedback, setPasswordFeedback] = useState<{
     type: 'success' | 'error';
     text: string;
   } | null>(null);
@@ -120,6 +146,9 @@ export function UserProfilePanel({
         setDisplayName(match.displayName);
         setDepartment(match.department);
         setJobTitle(match.jobTitle);
+        setPhone(match.phone ?? '');
+        setLocation(match.location ?? 'Main Refurbishment Bench');
+        setBio(match.bio ?? '');
         return;
       }
 
@@ -129,6 +158,9 @@ export function UserProfilePanel({
         setDisplayName(res.data.displayName);
         setDepartment(res.data.department);
         setJobTitle(res.data.jobTitle);
+        setPhone(res.data.phone ?? '');
+        setLocation(res.data.location ?? 'Main Refurbishment Bench');
+        setBio(res.data.bio ?? '');
       } else {
         setFeedback({ type: 'error', text: res.message });
       }
@@ -152,6 +184,9 @@ export function UserProfilePanel({
           displayName: displayName.trim(),
           department: department.trim(),
           jobTitle: jobTitle.trim(),
+          phone: phone.trim(),
+          location: location.trim(),
+          bio: bio.trim(),
           updatedAt: new Date().toISOString(),
         };
         setProfile(updated);
@@ -167,6 +202,9 @@ export function UserProfilePanel({
         displayName,
         department,
         jobTitle,
+        phone,
+        location,
+        bio,
       });
 
       if (res.ok) {
@@ -174,7 +212,7 @@ export function UserProfilePanel({
         onActorNameUpdated?.(res.data.displayName);
         setFeedback({
           type: 'success',
-          text: 'Your staff profile has been saved to Supabase public.profiles.',
+          text: 'Your staff profile has been saved to your separate account in Supabase public.profiles.',
         });
       } else {
         setFeedback({ type: 'error', text: res.message });
@@ -184,34 +222,88 @@ export function UserProfilePanel({
     }
   };
 
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPasswordFeedback(null);
+
+    if (newPassword.length < 6) {
+      setPasswordFeedback({
+        type: 'error',
+        text: 'New password must be at least 6 characters.',
+      });
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setPasswordFeedback({
+        type: 'error',
+        text: 'New password and confirmation password do not match.',
+      });
+      return;
+    }
+
+    setIsChangingPassword(true);
+    try {
+      if (isDemo) {
+        setNewPassword('');
+        setConfirmPassword('');
+        setPasswordFeedback({
+          type: 'success',
+          text: 'Sandbox password update simulated (no live account modified in /demo).',
+        });
+        return;
+      }
+
+      const res = await changeMyPasswordServerAction({ newPassword });
+      if (!res.ok) {
+        setPasswordFeedback({ type: 'error', text: res.message });
+        return;
+      }
+
+      const supabase = createSupabaseBrowserClient();
+      if (supabase) {
+        await supabase.auth.updateUser({ password: newPassword });
+      }
+
+      setNewPassword('');
+      setConfirmPassword('');
+      setPasswordFeedback({
+        type: 'success',
+        text: 'Your account password has been updated in Supabase and a security confirmation email was sent via Resend.',
+      });
+    } finally {
+      setIsChangingPassword(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="font-display text-[24px] sm:text-[32px] font-bold tracking-[-0.03em] text-[#0A0A0A]">
+          <h1 className="font-display text-[24px] sm:text-[32px] font-bold tracking-[-0.03em] text-[#1D1D1F]">
             Staff Profile & RBAC Permissions
           </h1>
-          <p className="text-[14px] text-[#6B6B6B]">
-            Manage your operational display identity, department, and inspect your active Row-Level Security (RLS) permissions.
+          <p className="text-[14px] text-[#6E6E73]">
+            Manage your personal profile details, change your account password, and inspect your isolated account workspace settings.
           </p>
         </div>
         {profile && <RolePill role={profile.role} />}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Left: Profile Editor Form */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        {/* Left: Extended Profile Editor Form */}
         <section
           aria-label="Edit Staff Profile"
           className="lg:col-span-7 genesis-card overflow-hidden"
         >
-          <div className="border-b border-[#E8E8EC] px-6 py-4 flex items-center justify-between">
+          <div className="border-b border-[#E5E5EA] px-6 py-4 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <UserCog className="h-4 w-4 text-[#6366F1]" aria-hidden="true" />
-              <h2 className="font-display text-[16px] font-bold text-[#0A0A0A]">
+              <h2 className="font-display text-[16px] font-bold text-[#1D1D1F]">
                 Personal & Operational Identity
               </h2>
             </div>
-            <span className="font-mono text-[11px] text-[#6B6B6B]">
+            <span className="font-mono text-[11px] text-[#6E6E73]">
               {isDemo ? 'Sandbox Profile' : 'Supabase public.profiles'}
             </span>
           </div>
@@ -220,7 +312,7 @@ export function UserProfilePanel({
             {feedback && (
               <div
                 role="status"
-                className={`rounded-[6px] border p-3 text-[13px] font-medium flex items-center gap-2 ${
+                className={`rounded-xl border p-3 text-[13px] font-medium flex items-center gap-2 ${
                   feedback.type === 'success'
                     ? 'border-[#10B981]/40 bg-[#10B981]/10 text-[#065F46]'
                     : 'border-[#EF4444]/40 bg-[#EF4444]/10 text-[#991B1B]'
@@ -235,7 +327,7 @@ export function UserProfilePanel({
               <div>
                 <label
                   htmlFor="profile-email"
-                  className="block text-[13px] font-medium text-[#0A0A0A] mb-1.5"
+                  className="block text-[13px] font-medium text-[#1D1D1F] mb-1.5"
                 >
                   Authenticated Email
                 </label>
@@ -244,14 +336,14 @@ export function UserProfilePanel({
                   type="email"
                   disabled
                   value={profile?.email ?? 'staff@reuseflow.org'}
-                  className="genesis-input w-full min-h-[44px] bg-[#FAFAFA] text-[#6B6B6B] cursor-not-allowed"
+                  className="genesis-input w-full min-h-[44px] bg-[#F5F5F7] text-[#6E6E73] cursor-not-allowed"
                 />
               </div>
 
               <div>
                 <label
                   htmlFor="profile-role"
-                  className="block text-[13px] font-medium text-[#0A0A0A] mb-1.5"
+                  className="block text-[13px] font-medium text-[#1D1D1F] mb-1.5"
                 >
                   Assigned Security Role (RLS Enforced)
                 </label>
@@ -260,7 +352,7 @@ export function UserProfilePanel({
                   type="text"
                   disabled
                   value={(profile?.role ?? actor.role).toUpperCase()}
-                  className="genesis-input w-full min-h-[44px] font-mono bg-[#FAFAFA] text-[#6B6B6B] cursor-not-allowed"
+                  className="genesis-input w-full min-h-[44px] font-mono bg-[#F5F5F7] text-[#6E6E73] cursor-not-allowed"
                 />
               </div>
             </div>
@@ -268,7 +360,7 @@ export function UserProfilePanel({
             <div>
               <label
                 htmlFor="profile-display-name"
-                className="block text-[13px] font-medium text-[#0A0A0A] mb-1.5"
+                className="block text-[13px] font-medium text-[#1D1D1F] mb-1.5"
               >
                 Full Display Name (Shown on Assessments & Audit Trail)
               </label>
@@ -288,7 +380,7 @@ export function UserProfilePanel({
               <div>
                 <label
                   htmlFor="profile-department"
-                  className="block text-[13px] font-medium text-[#0A0A0A] mb-1.5"
+                  className="block text-[13px] font-medium text-[#1D1D1F] mb-1.5"
                 >
                   Department / Bench Unit
                 </label>
@@ -307,7 +399,7 @@ export function UserProfilePanel({
               <div>
                 <label
                   htmlFor="profile-job-title"
-                  className="block text-[13px] font-medium text-[#0A0A0A] mb-1.5"
+                  className="block text-[13px] font-medium text-[#1D1D1F] mb-1.5"
                 >
                   Operational Title
                 </label>
@@ -324,10 +416,72 @@ export function UserProfilePanel({
               </div>
             </div>
 
-            <div className="pt-2 flex flex-wrap items-center justify-between gap-3 border-t border-[#E8E8EC]">
-              <span className="text-[12px] text-[#6B6B6B]">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label
+                  htmlFor="profile-phone"
+                  className="block text-[13px] font-medium text-[#1D1D1F] mb-1.5"
+                >
+                  <span className="inline-flex items-center gap-1.5">
+                    <Phone className="h-3.5 w-3.5 text-[#6E6E73]" aria-hidden="true" />
+                    Contact Phone (Optional)
+                  </span>
+                </label>
+                <input
+                  id="profile-phone"
+                  type="tel"
+                  maxLength={40}
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder="+1 (503) 555-0140"
+                  className="genesis-input w-full min-h-[44px]"
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="profile-location"
+                  className="block text-[13px] font-medium text-[#1D1D1F] mb-1.5"
+                >
+                  <span className="inline-flex items-center gap-1.5">
+                    <MapPin className="h-3.5 w-3.5 text-[#6E6E73]" aria-hidden="true" />
+                    Facility / Bench Location
+                  </span>
+                </label>
+                <input
+                  id="profile-location"
+                  type="text"
+                  maxLength={80}
+                  value={location}
+                  onChange={(e) => setLocation(e.target.value)}
+                  placeholder="Main Refurbishment Bench"
+                  className="genesis-input w-full min-h-[44px]"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label
+                htmlFor="profile-bio"
+                className="block text-[13px] font-medium text-[#1D1D1F] mb-1.5"
+              >
+                Technician Bio & Operational Notes
+              </label>
+              <textarea
+                id="profile-bio"
+                rows={2}
+                maxLength={300}
+                value={bio}
+                onChange={(e) => setBio(e.target.value)}
+                placeholder="Hardware specialties, bench certifications, or shift notes..."
+                className="genesis-input w-full"
+              />
+            </div>
+
+            <div className="pt-2 flex flex-wrap items-center justify-between gap-3 border-t border-[#E5E5EA]">
+              <span className="text-[12px] text-[#6E6E73]">
                 Account ID:{' '}
-                <code className="font-mono text-[#0A0A0A]">
+                <code className="font-mono text-[#1D1D1F]">
                   {profile?.id ?? actor.id}
                 </code>
               </span>
@@ -342,66 +496,137 @@ export function UserProfilePanel({
           </form>
         </section>
 
-        {/* Right: RBAC & RLS Security Matrix */}
-        <section
-          aria-label="Role Permissions Matrix"
-          className="lg:col-span-5 genesis-card p-6 space-y-4"
-        >
-          <div className="flex items-center gap-2">
-            <ShieldCheck className="h-4 w-4 text-[#10B981]" aria-hidden="true" />
-            <h2 className="font-display text-[16px] font-bold text-[#0A0A0A]">
-              Postgres RLS & Role Capabilities
-            </h2>
-          </div>
-          <p className="text-[13px] text-[#6B6B6B] leading-relaxed">
-            ReuseFlow prevents self-role escalation via the{' '}
-            <code className="font-mono text-[#0A0A0A]">
-              trg_prevent_role_self_promotion
-            </code>{' '}
-            database trigger. Role updates can only be executed by a verified{' '}
-            <strong className="text-[#0A0A0A]">Manager / Admin</strong> in the Admin Panel.
-          </p>
-
-          <div className="space-y-3 text-[13px]">
-            <div className="genesis-panel bg-[#FAFAFA] p-3.5 space-y-1">
-              <div className="flex items-center justify-between">
-                <span className="font-display font-bold text-[#0A0A0A]">
-                  Manager / Admin
-                </span>
-                <span className="font-mono text-[11px] text-[#6366F1]">Full Access</span>
+        {/* Right Column: Change Password Card + RBAC & Isolated Account Data Summary */}
+        <div className="lg:col-span-5 space-y-6">
+          {/* Change Account Password Card */}
+          <section
+            aria-label="Change Account Password"
+            className="genesis-card overflow-hidden"
+          >
+            <div className="border-b border-[#E5E5EA] px-6 py-4 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Lock className="h-4 w-4 text-[#6366F1]" aria-hidden="true" />
+                <h2 className="font-display text-[16px] font-bold text-[#1D1D1F]">
+                  Change Account Password
+                </h2>
               </div>
-              <p className="text-[12px] text-[#6B6B6B]">
-                Can approve refurbishments, release safety quarantine, close dispositions, update economic assumptions, trigger Resend emails, and manage staff roles in the Admin Panel.
-              </p>
+              <span className="font-mono text-[11px] text-[#10B981]">
+                auth.users + Resend Notice
+              </span>
             </div>
 
-            <div className="genesis-panel bg-[#FAFAFA] p-3.5 space-y-1">
-              <div className="flex items-center justify-between">
-                <span className="font-display font-bold text-[#0A0A0A]">
-                  Technician / Staff
-                </span>
-                <span className="font-mono text-[11px] text-[#10B981]">
-                  Bench Operations
-                </span>
-              </div>
-              <p className="text-[12px] text-[#6B6B6B]">
-                Can log new device intake, edit intake specs, run v1.0.0 assessments, start bench repairs, and record external NIST 800-88 sanitization verification.
-              </p>
-            </div>
+            <form onSubmit={handleChangePassword} className="p-6 space-y-4">
+              {passwordFeedback && (
+                <div
+                  role="status"
+                  className={`rounded-xl border p-3 text-[12px] font-medium flex items-start gap-2 ${
+                    passwordFeedback.type === 'success'
+                      ? 'border-[#10B981]/40 bg-[#10B981]/10 text-[#065F46]'
+                      : 'border-[#EF4444]/40 bg-[#EF4444]/10 text-[#991B1B]'
+                  }`}
+                >
+                  <CheckCircle2 className="h-4 w-4 shrink-0 mt-0.5" aria-hidden="true" />
+                  <span>{passwordFeedback.text}</span>
+                </div>
+              )}
 
-            <div className="genesis-panel bg-[#FAFAFA] p-3.5 space-y-1">
-              <div className="flex items-center justify-between">
-                <span className="font-display font-bold text-[#0A0A0A]">
-                  Viewer / Auditor
-                </span>
-                <span className="font-mono text-[11px] text-[#6B6B6B]">Read-Only</span>
+              <div>
+                <label
+                  htmlFor="profile-new-password"
+                  className="block text-[13px] font-medium text-[#1D1D1F] mb-1.5"
+                >
+                  New Password
+                </label>
+                <input
+                  id="profile-new-password"
+                  type="password"
+                  required
+                  minLength={6}
+                  autoComplete="new-password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="Enter new password (min 6 chars)"
+                  className="genesis-input w-full min-h-[44px]"
+                />
               </div>
-              <p className="text-[12px] text-[#6B6B6B]">
-                Read-only access to inventory, cost waterfall ledgers, workflow audit logs, CSV exports, and Scenario Lab simulations.
-              </p>
+
+              <div>
+                <label
+                  htmlFor="profile-confirm-password"
+                  className="block text-[13px] font-medium text-[#1D1D1F] mb-1.5"
+                >
+                  Confirm New Password
+                </label>
+                <input
+                  id="profile-confirm-password"
+                  type="password"
+                  required
+                  minLength={6}
+                  autoComplete="new-password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Repeat new password"
+                  className="genesis-input w-full min-h-[44px]"
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={isChangingPassword}
+                className="genesis-btn-primary w-full min-h-[44px] inline-flex items-center justify-center gap-2 px-4 py-2.5 text-[13px] disabled:opacity-50 cursor-pointer"
+              >
+                <KeyRound className="h-4 w-4" aria-hidden="true" />
+                {isChangingPassword
+                  ? 'Updating Password...'
+                  : 'Update Account Password'}
+              </button>
+            </form>
+          </section>
+
+          {/* Separate User Account Isolation & RLS Matrix */}
+          <section
+            aria-label="Role Permissions Matrix"
+            className="genesis-card p-6 space-y-4"
+          >
+            <div className="flex items-center gap-2">
+              <ShieldCheck className="h-4 w-4 text-[#10B981]" aria-hidden="true" />
+              <h2 className="font-display text-[16px] font-bold text-[#1D1D1F]">
+                Per-User Account Isolation & RLS
+              </h2>
             </div>
-          </div>
-        </section>
+            <p className="text-[13px] text-[#6E6E73] leading-relaxed">
+              Every user account stores its own isolated devices (<code className="font-mono text-[#1D1D1F]">public.devices</code>), append-only assessments, workflow events, and personal Scenario Lab thresholds (<code className="font-mono text-[#1D1D1F]">public.user_settings</code>) keyed by <code className="font-mono text-[#1D1D1F]">auth.uid()</code>.
+            </p>
+
+            <div className="space-y-2.5 text-[12px]">
+              <div className="genesis-panel bg-[#FAFAFC] p-3 space-y-1">
+                <div className="flex items-center justify-between">
+                  <span className="font-display font-bold text-[#1D1D1F]">
+                    Manager / Admin
+                  </span>
+                  <span className="font-mono text-[11px] text-[#6366F1]">Full Access</span>
+                </div>
+                <p className="text-[#6E6E73]">
+                  Approves refurbishments, releases quarantine, closes dispositions, triggers Resend summary emails, and manages staff roles in the Admin Panel.
+                </p>
+              </div>
+
+              <div className="genesis-panel bg-[#FAFAFC] p-3 space-y-1">
+                <div className="flex items-center justify-between">
+                  <span className="font-display font-bold text-[#1D1D1F]">
+                    Technician / Staff
+                  </span>
+                  <span className="font-mono text-[11px] text-[#10B981]">
+                    Bench Operations
+                  </span>
+                </div>
+                <p className="text-[#6E6E73]">
+                  Logs device intake, edits bench specs, runs v1.0.0 assessments, customizes personal Scenario Lab thresholds, and records external sanitization verification.
+                </p>
+              </div>
+            </div>
+          </section>
+        </div>
       </div>
     </div>
   );
@@ -549,10 +774,10 @@ export function AdminGovernancePanel({
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="font-display text-[24px] sm:text-[32px] font-bold tracking-[-0.03em] text-[#0A0A0A]">
+          <h1 className="font-display text-[24px] sm:text-[32px] font-bold tracking-[-0.03em] text-[#1D1D1F]">
             Admin Panel & System Governance
           </h1>
-          <p className="text-[14px] text-[#6B6B6B]">
+          <p className="text-[14px] text-[#6E6E73]">
             Manage registered staff profiles, RBAC role assignments, Supabase database telemetry, and Resend operational email audit logs.
           </p>
         </div>
@@ -573,7 +798,7 @@ export function AdminGovernancePanel({
       {actor.role !== 'manager' && (
         <div
           role="status"
-          className="rounded-[8px] border border-[#F59E0B]/40 bg-[#F59E0B]/10 p-4 text-[13px] text-[#92400E] flex items-center gap-2.5"
+          className="rounded-xl border border-[#F59E0B]/40 bg-[#F59E0B]/10 p-4 text-[13px] text-[#92400E] flex items-center gap-2.5"
         >
           <ShieldAlert className="h-4 w-4 text-[#F59E0B] shrink-0" aria-hidden="true" />
           <span>
@@ -585,7 +810,7 @@ export function AdminGovernancePanel({
       {banner && (
         <div
           role="status"
-          className={`rounded-[8px] border p-4 text-[13px] font-medium flex items-center justify-between gap-3 ${
+          className={`rounded-xl border p-4 text-[13px] font-medium flex items-center justify-between gap-3 ${
             banner.type === 'success'
               ? 'border-[#10B981]/40 bg-[#10B981]/10 text-[#065F46]'
               : 'border-[#EF4444]/40 bg-[#EF4444]/10 text-[#991B1B]'
@@ -608,62 +833,62 @@ export function AdminGovernancePanel({
       {/* System Telemetry Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
         <div className="genesis-card p-5 space-y-1">
-          <div className="flex items-center justify-between text-[12px] text-[#6B6B6B]">
+          <div className="flex items-center justify-between text-[12px] text-[#6E6E73]">
             <span>Registered Staff</span>
             <Users className="h-4 w-4 text-[#6366F1]" aria-hidden="true" />
           </div>
-          <div className="font-display text-[28px] font-bold text-[#0A0A0A]">
+          <div className="font-display text-[28px] font-bold text-[#1D1D1F]">
             {overview?.counts.users ?? 0}
           </div>
-          <div className="text-[11px] font-mono text-[#6B6B6B]">public.profiles</div>
+          <div className="text-[11px] font-mono text-[#6E6E73]">public.profiles</div>
         </div>
 
         <div className="genesis-card p-5 space-y-1">
-          <div className="flex items-center justify-between text-[12px] text-[#6B6B6B]">
-            <span>Triaged Devices</span>
+          <div className="flex items-center justify-between text-[12px] text-[#6E6E73]">
+            <span>Account Devices</span>
             <Database className="h-4 w-4 text-[#10B981]" aria-hidden="true" />
           </div>
-          <div className="font-display text-[28px] font-bold text-[#0A0A0A]">
+          <div className="font-display text-[28px] font-bold text-[#1D1D1F]">
             {devices.length}
           </div>
-          <div className="text-[11px] font-mono text-[#6B6B6B]">public.devices</div>
+          <div className="text-[11px] font-mono text-[#6E6E73]">public.devices</div>
         </div>
 
         <div className="genesis-card p-5 space-y-1">
-          <div className="flex items-center justify-between text-[12px] text-[#6B6B6B]">
+          <div className="flex items-center justify-between text-[12px] text-[#6E6E73]">
             <span>Assessments</span>
             <ShieldCheck className="h-4 w-4 text-[#6366F1]" aria-hidden="true" />
           </div>
-          <div className="font-display text-[28px] font-bold text-[#0A0A0A]">
+          <div className="font-display text-[28px] font-bold text-[#1D1D1F]">
             {devices.reduce((acc, d) => acc + d.assessments.length, 0)}
           </div>
-          <div className="text-[11px] font-mono text-[#6B6B6B]">
+          <div className="text-[11px] font-mono text-[#6E6E73]">
             Append-Only Snapshots
           </div>
         </div>
 
         <div className="genesis-card p-5 space-y-1">
-          <div className="flex items-center justify-between text-[12px] text-[#6B6B6B]">
+          <div className="flex items-center justify-between text-[12px] text-[#6E6E73]">
             <span>Workflow Events</span>
             <KeyRound className="h-4 w-4 text-[#F59E0B]" aria-hidden="true" />
           </div>
-          <div className="font-display text-[28px] font-bold text-[#0A0A0A]">
+          <div className="font-display text-[28px] font-bold text-[#1D1D1F]">
             {devices.reduce((acc, d) => acc + d.workflowEvents.length, 0)}
           </div>
-          <div className="text-[11px] font-mono text-[#6B6B6B]">
+          <div className="text-[11px] font-mono text-[#6E6E73]">
             Immutable Audit Log
           </div>
         </div>
 
         <div className="genesis-card p-5 space-y-1 col-span-2 lg:col-span-1">
-          <div className="flex items-center justify-between text-[12px] text-[#6B6B6B]">
+          <div className="flex items-center justify-between text-[12px] text-[#6E6E73]">
             <span>Resend Logs</span>
             <Mail className="h-4 w-4 text-[#10B981]" aria-hidden="true" />
           </div>
-          <div className="font-display text-[28px] font-bold text-[#0A0A0A]">
+          <div className="font-display text-[28px] font-bold text-[#1D1D1F]">
             {overview?.counts.emailEvents ?? 0}
           </div>
-          <div className="text-[11px] font-mono text-[#6B6B6B]">public.email_events</div>
+          <div className="text-[11px] font-mono text-[#6E6E73]">public.email_events</div>
         </div>
       </div>
 
@@ -672,18 +897,18 @@ export function AdminGovernancePanel({
         aria-label="Staff Role Governance"
         className="genesis-card overflow-hidden"
       >
-        <div className="border-b border-[#E8E8EC] px-6 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div className="border-b border-[#E5E5EA] px-6 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
-            <h2 className="font-display text-[18px] font-bold text-[#0A0A0A]">
+            <h2 className="font-display text-[18px] font-bold text-[#1D1D1F]">
               Staff Directory & Role Access Control (RBAC)
             </h2>
-            <p className="text-[12px] text-[#6B6B6B]">
-              Role updates execute via the <code className="font-mono text-[#0A0A0A]">public.admin_update_user_profile</code> security-definer RPC.
+            <p className="text-[12px] text-[#6E6E73]">
+              Role updates execute via the <code className="font-mono text-[#1D1D1F]">public.admin_update_user_profile</code> security-definer RPC.
             </p>
           </div>
           <div className="relative w-full sm:w-72">
             <Search
-              className="h-4 w-4 text-[#9C9C9C] absolute left-3 top-1/2 -translate-y-1/2"
+              className="h-4 w-4 text-[#86868B] absolute left-3 top-1/2 -translate-y-1/2"
               aria-hidden="true"
             />
             <input
@@ -700,40 +925,41 @@ export function AdminGovernancePanel({
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="border-b border-[#E8E8EC] bg-[#FAFAFA] text-[11px] font-medium uppercase tracking-wider text-[#6B6B6B]">
+              <tr className="border-b border-[#E5E5EA] bg-[#FAFAFC] text-[11px] font-medium uppercase tracking-wider text-[#6E6E73]">
                 <th className="py-3.5 px-6">Staff Member</th>
                 <th className="py-3.5 px-4">Department & Title</th>
                 <th className="py-3.5 px-4">Current Role</th>
                 <th className="py-3.5 px-6 text-right">Admin Role Assignment</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#E8E8EC] text-[13px]">
+            <tbody className="divide-y divide-[#E5E5EA] text-[13px]">
               {filteredProfiles.map((member) => {
                 const selectedRole = pendingRoles[member.id] ?? member.role;
                 const isChanged = selectedRole !== member.role;
                 return (
                   <tr
                     key={member.id}
-                    className="hover:bg-[#FAFAFA] transition-colors"
+                    className="hover:bg-[#FAFAFC] transition-colors"
                   >
                     <td className="py-4 px-6">
-                      <div className="font-medium text-[#0A0A0A]">
+                      <div className="font-medium text-[#1D1D1F]">
                         {member.displayName}
                       </div>
-                      <div className="font-mono text-[12px] text-[#6B6B6B]">
+                      <div className="font-mono text-[12px] text-[#6E6E73]">
                         {member.email}
                       </div>
                     </td>
                     <td className="py-4 px-4">
-                      <div className="inline-flex items-center gap-1.5 text-[#0A0A0A] font-medium">
+                      <div className="inline-flex items-center gap-1.5 text-[#1D1D1F] font-medium">
                         <Building2
-                          className="h-3.5 w-3.5 text-[#6B6B6B]"
+                          className="h-3.5 w-3.5 text-[#6E6E73]"
                           aria-hidden="true"
                         />
                         {member.department}
                       </div>
-                      <div className="text-[12px] text-[#6B6B6B]">
+                      <div className="text-[12px] text-[#6E6E73]">
                         {member.jobTitle}
+                        {member.location ? ` · ${member.location}` : ''}
                       </div>
                     </td>
                     <td className="py-4 px-4">
@@ -791,21 +1017,21 @@ export function AdminGovernancePanel({
           aria-label="Outbound Email Audit Log"
           className="genesis-card overflow-hidden"
         >
-          <div className="border-b border-[#E8E8EC] px-6 py-4 flex items-center justify-between">
+          <div className="border-b border-[#E5E5EA] px-6 py-4 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Mail className="h-4 w-4 text-[#6366F1]" aria-hidden="true" />
-              <h2 className="font-display text-[16px] font-bold text-[#0A0A0A]">
+              <h2 className="font-display text-[16px] font-bold text-[#1D1D1F]">
                 Resend Outbound Email Audit Trail (public.email_events)
               </h2>
             </div>
-            <span className="font-mono text-[11px] text-[#6B6B6B]">
+            <span className="font-mono text-[11px] text-[#6E6E73]">
               Sender: ReuseFlow &lt;info@ensure.in&gt;
             </span>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse text-[13px]">
               <thead>
-                <tr className="border-b border-[#E8E8EC] bg-[#FAFAFA] text-[11px] font-medium uppercase tracking-wider text-[#6B6B6B]">
+                <tr className="border-b border-[#E5E5EA] bg-[#FAFAFC] text-[11px] font-medium uppercase tracking-wider text-[#6E6E73]">
                   <th className="py-3 px-6">Timestamp</th>
                   <th className="py-3 px-4">Recipient</th>
                   <th className="py-3 px-4">Provider ID</th>
@@ -813,19 +1039,19 @@ export function AdminGovernancePanel({
                   <th className="py-3 px-6 text-right">Status</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#E8E8EC]">
+              <tbody className="divide-y divide-[#E5E5EA]">
                 {overview.emailEvents.map((ev) => (
-                  <tr key={ev.id} className="hover:bg-[#FAFAFA]">
-                    <td className="py-3 px-6 font-mono text-[12px] text-[#6B6B6B]">
+                  <tr key={ev.id} className="hover:bg-[#FAFAFC]">
+                    <td className="py-3 px-6 font-mono text-[12px] text-[#6E6E73]">
                       {new Date(ev.createdAt).toLocaleString()}
                     </td>
-                    <td className="py-3 px-4 font-mono text-[#0A0A0A]">
+                    <td className="py-3 px-4 font-mono text-[#1D1D1F]">
                       {ev.recipient}
                     </td>
-                    <td className="py-3 px-4 font-mono text-[12px] text-[#6B6B6B]">
+                    <td className="py-3 px-4 font-mono text-[12px] text-[#6E6E73]">
                       {ev.providerId ?? '—'}
                     </td>
-                    <td className="py-3 px-4 font-mono text-[12px] text-[#6B6B6B]">
+                    <td className="py-3 px-4 font-mono text-[12px] text-[#6E6E73]">
                       {ev.idempotencyKey}
                     </td>
                     <td className="py-3 px-6 text-right">

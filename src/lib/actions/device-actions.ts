@@ -165,6 +165,15 @@ function mapDbDevice(row: DbDeviceRow): Device {
 export async function listDevicesServerAction(
   filters?: DeviceFilters
 ): Promise<ActionResponse<Device[]>> {
+  const auth = await getVerifiedServerActor();
+  if (auth.status !== 'authenticated') {
+    return {
+      ok: false,
+      code: 'UNAUTHORIZED',
+      message: 'Authentication required to read production device inventory.',
+    };
+  }
+
   const supabase = await createSupabaseServerClient();
   if (!supabase) {
     return {
@@ -174,9 +183,15 @@ export async function listDevicesServerAction(
     };
   }
 
+  // Ensure this user's separate account workspace is seeded if empty
+  await supabase.rpc('ensure_user_workspace_seeded', {
+    p_user_id: auth.actor.id,
+  });
+
   let query = supabase
     .from('devices')
     .select('*, assessments(*), workflow_events(*)')
+    .eq('created_by', auth.actor.id)
     .order('updated_at', { ascending: false });
 
   if (filters?.category && filters.category !== 'all') {
@@ -186,20 +201,7 @@ export async function listDevicesServerAction(
     query = query.eq('status', filters.status);
   }
 
-  const [authRes, queryRes] = await Promise.all([
-    supabase.auth.getUser(),
-    query,
-  ]);
-
-  if (authRes.error || !authRes.data.user) {
-    return {
-      ok: false,
-      code: 'UNAUTHORIZED',
-      message: 'Authentication required to read production device inventory.',
-    };
-  }
-
-  const { data, error } = queryRes;
+  const { data, error } = await query;
   if (error) {
     return {
       ok: false,
@@ -251,6 +253,7 @@ export async function getDeviceServerAction(
     .from('devices')
     .select('*, assessments(*), workflow_events(*)')
     .eq('id', id)
+    .eq('created_by', auth.actor.id)
     .maybeSingle();
 
   if (error) {
@@ -260,8 +263,29 @@ export async function getDeviceServerAction(
 }
 
 export async function getEngineConfigServerAction(): Promise<EngineConfig> {
+  const auth = await getVerifiedServerActor();
   const supabase = await createSupabaseServerClient();
   if (!supabase) return DEFAULT_ENGINE_CONFIG;
+
+  if (auth.status === 'authenticated') {
+    const { data: userData } = await supabase
+      .from('user_settings')
+      .select('*')
+      .eq('user_id', auth.actor.id)
+      .maybeSingle();
+
+    if (userData) {
+      return {
+        ruleVersion: '1.0.0',
+        hourlyRateCents: userData.hourly_rate_cents ?? DEFAULT_ENGINE_CONFIG.hourlyRateCents,
+        minMarginCents: userData.min_margin_cents ?? DEFAULT_ENGINE_CONFIG.minMarginCents,
+        minLaptopRamGb: userData.min_laptop_ram_gb ?? DEFAULT_ENGINE_CONFIG.minLaptopRamGb,
+        overheadCents: userData.overhead_cents ?? DEFAULT_ENGINE_CONFIG.overheadCents,
+        baselineMinutes: userData.baseline_minutes ?? DEFAULT_ENGINE_CONFIG.baselineMinutes,
+        targetMinutes: userData.target_minutes ?? DEFAULT_ENGINE_CONFIG.targetMinutes,
+      };
+    }
+  }
 
   const { data } = await supabase
     .from('assumption_settings')
@@ -360,7 +384,7 @@ export async function createDeviceServerAction(
       ok: false,
       code: isDuplicate ? 'CONFLICT' : 'INTERNAL',
       message: isDuplicate
-        ? `Asset tag '${input.assetTag}' already exists.`
+        ? `Asset tag '${input.assetTag}' already exists in your account.`
         : 'Could not insert device record.',
     };
   }
@@ -489,7 +513,8 @@ export async function updateDeviceIntakeServerAction(
       sanitization_status: updatedSanitization,
       updated_at: new Date().toISOString(),
     })
-    .eq('id', id);
+    .eq('id', id)
+    .eq('created_by', auth.actor.id);
 
   if (error) {
     return { ok: false, code: 'INTERNAL', message: 'Failed to update device intake fields.' };
@@ -589,7 +614,8 @@ export async function assessDeviceServerAction(
         status: nextStatus,
         updated_at: new Date().toISOString(),
       })
-      .eq('id', existing.id);
+      .eq('id', existing.id)
+      .eq('created_by', auth.actor.id);
 
     await supabase.from('workflow_events').insert({
       device_id: existing.id,
@@ -739,7 +765,8 @@ export async function verifySanitizationServerAction(
       sanitization_note: input.note.trim(),
       updated_at: now,
     })
-    .eq('id', input.deviceId);
+    .eq('id', input.deviceId)
+    .eq('created_by', auth.actor.id);
 
   if (error) {
     return {
@@ -774,11 +801,11 @@ export async function updateEngineConfigServerAction(
     return { ok: false, code: 'UNAUTHORIZED', message: 'Authentication required.' };
   }
 
-  if (auth.actor.role !== 'manager') {
+  if (auth.actor.role === 'viewer') {
     return {
       ok: false,
       code: 'FORBIDDEN',
-      message: 'Only a Refurbishment Manager can update illustrative economic assumptions.',
+      message: 'Viewer role is read-only and cannot update economic assumptions.',
     };
   }
 
@@ -797,19 +824,17 @@ export async function updateEngineConfigServerAction(
   }
 
   const cfg = parsed.data;
-  const { error } = await supabase
-    .from('assumption_settings')
-    .update({
-      hourly_rate_cents: cfg.hourlyRateCents,
-      min_margin_cents: cfg.minMarginCents,
-      min_laptop_ram_gb: cfg.minLaptopRamGb,
-      overhead_cents: cfg.overheadCents,
-      baseline_minutes: cfg.baselineMinutes,
-      target_minutes: cfg.targetMinutes,
-      updated_by: auth.actor.id,
-      updated_at: new Date().toISOString(),
-    })
-    .eq('id', 1);
+  const { error } = await supabase.from('user_settings').upsert({
+    user_id: auth.actor.id,
+    rule_version: '1.0.0',
+    hourly_rate_cents: cfg.hourlyRateCents,
+    min_margin_cents: cfg.minMarginCents,
+    min_laptop_ram_gb: cfg.minLaptopRamGb,
+    overhead_cents: cfg.overheadCents,
+    baseline_minutes: cfg.baselineMinutes,
+    target_minutes: cfg.targetMinutes,
+    updated_at: new Date().toISOString(),
+  });
 
   if (error) {
     return { ok: false, code: 'INTERNAL', message: 'Could not save assumption settings.' };

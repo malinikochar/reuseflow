@@ -137,16 +137,32 @@ test.describe('ReuseFlow End-to-End Judge Smoke Walkthrough (/ -> /demo & /app)'
     await page.goto('/login');
     await expect(page.getByText('One-Click Demo Login (/app)')).toBeVisible();
 
+    // Verify Forgot Password tab is accessible and renders email recovery form
+    await page.getByRole('button', { name: /Forgot Password/i }).first().click();
+    await expect(
+      page.getByRole('heading', { name: /Reset Your Account Password/i })
+    ).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: /Send Recovery Code via Email/i })
+    ).toBeVisible();
+    await page.getByRole('button', { name: /Staff Sign In/i }).first().click();
+
     await page.getByRole('button', { name: /Login as Admin/i }).click();
     await expect(page).toHaveURL(/\/app/, { timeout: 15000 });
 
-    // Verify seeded Supabase devices loaded
+    // Verify seeded Supabase devices loaded in isolated user workspace
     await expect(page.getByText('FG-DEMO-101').first()).toBeVisible({ timeout: 15000 });
 
-    // Open My Profile tab
+    // Open My Profile tab and verify extended profile fields & Change Account Password card
     await page.getByRole('button', { name: /My Profile/i }).click();
     await expect(
       page.getByRole('heading', { name: /Staff Profile & RBAC Permissions/i })
+    ).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: /Change Account Password/i })
+    ).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: /Update Account Password/i })
     ).toBeVisible();
 
     // Open Admin Panel tab

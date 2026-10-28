@@ -3,6 +3,11 @@ import {
   resetEmailRateLimitStateForTests,
   sendOperationalSummaryServerOnly,
 } from '@/lib/email/resend-service';
+import {
+  sendRegistrationWelcomeEmail,
+  sendPasswordResetCodeEmail,
+  sendPasswordChangedNoticeEmail,
+} from '@/lib/email/auth-email-service';
 import { buildSeedDemoDevices } from '@/fixtures/demo-devices';
 
 describe('Resend Optional P1 Server-Only Operational Summary Service', () => {
@@ -170,5 +175,39 @@ describe('Resend Optional P1 Server-Only Operational Summary Service', () => {
       expect(duplicate.code).toBe('CONFLICT');
     }
     expect(mockSend).toHaveBeenCalledTimes(1);
+  });
+
+  it('degrades gracefully for welcome and password reset emails when RESEND_API_KEY is not set', async () => {
+    const prevKey = process.env.RESEND_API_KEY;
+    delete process.env.RESEND_API_KEY;
+    try {
+      const welcome = await sendRegistrationWelcomeEmail({
+        email: 'newuser@example.org',
+        displayName: 'Alex Operator',
+        role: 'technician',
+        department: 'Intake & Triage',
+        jobTitle: 'Refurbishment Technician',
+      });
+      expect(welcome.ok).toBe(false);
+      expect(welcome.message).toContain('RESEND_API_KEY');
+
+      const reset = await sendPasswordResetCodeEmail({
+        email: 'newuser@example.org',
+        displayName: 'Alex Operator',
+        code: '482910',
+      });
+      expect(reset.ok).toBe(false);
+      expect(reset.message).toContain('RESEND_API_KEY');
+
+      const changed = await sendPasswordChangedNoticeEmail({
+        email: 'newuser@example.org',
+        displayName: 'Alex Operator',
+      });
+      expect(changed.ok).toBe(false);
+    } finally {
+      if (prevKey !== undefined) {
+        process.env.RESEND_API_KEY = prevKey;
+      }
+    }
   });
 });

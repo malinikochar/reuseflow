@@ -202,6 +202,9 @@ export type UserProfile = {
   displayName: string;
   department: string;
   jobTitle: string;
+  phone?: string;
+  location?: string;
+  bio?: string;
   role: UserRole;
   createdAt: string;
   updatedAt: string;
