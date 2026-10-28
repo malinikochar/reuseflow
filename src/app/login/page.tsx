@@ -76,9 +76,8 @@ export default function LoginPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [infoMessage, setInfoMessage] = useState<string | null>(null);
 
-  // Warm the /app and /demo route bundles immediately on mount for instant transition
+  // Warm the public /demo sandbox route bundle on mount (never prefetch /app while unauthenticated)
   useEffect(() => {
-    router.prefetch('/app');
     router.prefetch('/demo');
   }, [router]);
 
@@ -108,7 +107,7 @@ export default function LoginPage() {
       }
 
       navigating = true;
-      router.push('/app');
+      window.location.assign('/app');
     } catch {
       setErrorMessage('Unable to complete sign-in request.');
     } finally {
@@ -167,7 +166,7 @@ export default function LoginPage() {
       // If session is returned immediately (auto-confirmed via trigger), redirect to /app
       if (data.session) {
         navigating = true;
-        router.push('/app');
+        window.location.assign('/app');
         return;
       }
 
@@ -186,7 +185,7 @@ export default function LoginPage() {
       }
 
       navigating = true;
-      router.push('/app');
+      window.location.assign('/app');
     } catch {
       setErrorMessage('Unable to complete account registration.');
     } finally {

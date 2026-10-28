@@ -29,9 +29,11 @@ import { MetricCard } from '@/components/shared/badges-and-banners';
 export function OperationsDashboardOverview({
   devices,
   engineConfig,
+  onSelectDevice,
 }: {
   devices: Device[];
   engineConfig: EngineConfig;
+  onSelectDevice?: (deviceId: string) => void;
 }) {
   const totalDevices = devices.length;
   const refurbCandidates = devices.filter(
@@ -382,10 +384,15 @@ export function OperationsDashboardOverview({
               const costPct = Math.min(100, Math.round((costDollars / maxUnitDollars) * 100));
 
               return (
-                <div key={d.id} className="space-y-1 text-[11px]">
+                <button
+                  key={d.id}
+                  type="button"
+                  onClick={() => onSelectDevice?.(d.id)}
+                  className="w-full text-left space-y-1 text-[11px] rounded-lg px-1.5 py-1 hover:bg-[#F2F2F7] transition-colors cursor-pointer"
+                >
                   <div className="flex items-center justify-between">
                     <span className="font-mono text-[#1D1D1F] font-medium truncate max-w-[165px]">
-                      {d.assetTag} · {d.model}
+                      {d.brand} {d.model}
                     </span>
                     <span
                       className={`font-mono font-semibold ${
@@ -417,7 +424,7 @@ export function OperationsDashboardOverview({
                       />
                     </div>
                   </div>
-                </div>
+                </button>
               );
             })}
           </div>

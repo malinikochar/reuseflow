@@ -864,6 +864,13 @@ export function OperationsWorkspace({
                   <OperationsDashboardOverview
                     devices={allDevices}
                     engineConfig={engineConfig}
+                    onSelectDevice={(id) => {
+                      setSelectedDeviceId(id);
+                      detailPanelRef.current?.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'nearest',
+                      });
+                    }}
                   />
                 </div>
 

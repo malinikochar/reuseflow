@@ -4,19 +4,24 @@ test.describe('ReuseFlow End-to-End Judge Smoke Walkthrough (/ -> /demo & /app)'
   test('completes full judge journey: landing -> demo -> quick triage filters -> AI & Web Research -> intake -> approval -> Scenario Lab -> reset', async ({
     page,
   }) => {
-    // 1. Open landing page and click Try Interactive Demo
+    // 1. Open landing page, verify removed anchor links are absent, and click Try Interactive Demo
     await page.goto('/');
     await expect(
       page.getByRole('heading', {
         name: /Turn donated electronics into transparent, human-approved refurbishment decisions/i,
       })
     ).toBeVisible();
+    await expect(page.getByRole('link', { name: '3-Step Workflow' })).toHaveCount(0);
+    await expect(page.getByRole('link', { name: 'Scenario & Safety Gates' })).toHaveCount(0);
 
     await page.getByRole('link', { name: /Try Interactive Demo/i }).first().click();
     await expect(page).toHaveURL(/\/demo/);
 
-    // 2. Check Fictional Sample Data banner & populated metrics
+    // 2. Check Fictional Sample Data banner, Apple-style live SVG telemetry charts & populated metrics
     await expect(page.getByText('Fictional Sample Data')).toBeVisible();
+    await expect(page.getByText('Live Triage Distribution')).toBeVisible();
+    await expect(page.getByText('3-Gate Compliance Rings')).toBeVisible();
+    await expect(page.getByText('Unit Economics Telemetry')).toBeVisible();
     await expect(page.getByText('FG-DEMO-101').first()).toBeVisible();
     await expect(
       page.getByText('Net Refurbishment Value Unlocked').first()
@@ -91,6 +96,9 @@ test.describe('ReuseFlow End-to-End Judge Smoke Walkthrough (/ -> /demo & /app)'
     ).toBeVisible();
     await expect(
       page.getByText(/Strategic Alternatives Analysis — Refurbishment Triage Operating Model/i)
+    ).toBeVisible();
+    await expect(
+      page.getByText(/12-Month Cumulative Capacity Trajectory/i)
     ).toBeVisible();
     await expect(page.getByText('$200.00/mo').first()).toBeVisible();
 
