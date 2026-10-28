@@ -24,12 +24,12 @@ test.describe('ReuseFlow End-to-End Judge Smoke Walkthrough (/ -> /demo)', () =>
 
     // 2b. Select Case E (FG-DEMO-105) with missing comparable value, complete intake specs, and verify reassessment
     await page.getByText('FG-DEMO-105').first().click();
-    await expect(
-      page.getByRole('button', { name: /Complete Missing Intake Inputs/i })
-    ).toBeVisible();
+    await page
+      .getByRole('button', { name: /Complete Missing Intake Specs/i })
+      .click();
     await page.getByLabel('Comparable Value ($ USD)').fill('140.00');
     await page
-      .getByRole('button', { name: /Save Specs & Re-run v1\.0\.0 Assessment/i })
+      .getByRole('button', { name: /Save Specs & Re-Evaluate v1\.0\.0/i })
       .click();
     await expect(
       page.getByText(/Updated intake specs for FG-DEMO-105 and re-evaluated v1\.0\.0: REFURBISH_CANDIDATE/i)
