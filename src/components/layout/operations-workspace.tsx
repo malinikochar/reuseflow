@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
@@ -139,7 +139,6 @@ export function OperationsWorkspace({
   };
 
   const [allDevices, setAllDevices] = useState<Device[]>([]);
-  const [filteredDevices, setFilteredDevices] = useState<Device[]>([]);
   const [selectedDeviceId, setSelectedDeviceId] = useState<string | null>(null);
   const [filters, setFilters] = useState<DeviceFilters>({
     search: '',
@@ -156,18 +155,40 @@ export function OperationsWorkspace({
 
   const detailPanelRef = useRef<HTMLDivElement | null>(null);
 
+  const filteredDevices = useMemo(() => {
+    return allDevices.filter((d) => {
+      if (filters.category && filters.category !== 'all' && d.category !== filters.category) {
+        return false;
+      }
+      if (filters.status && filters.status !== 'all' && d.status !== filters.status) {
+        return false;
+      }
+      if (
+        filters.decision &&
+        filters.decision !== 'all' &&
+        d.latestAssessment?.decision !== filters.decision
+      ) {
+        return false;
+      }
+      if (filters.search && filters.search.trim() !== '') {
+        const q = filters.search.trim().toLowerCase();
+        const hay = `${d.assetTag} ${d.brand} ${d.model} ${d.category}`.toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      return true;
+    });
+  }, [allDevices, filters]);
+
   const loadWorkspaceData = useCallback(
     async (preferredSelectedId?: string) => {
       try {
         setError(null);
-        const [fullList, filteredList, cfg] = await Promise.all([
+        const [fullList, cfg] = await Promise.all([
           repository.list(),
-          repository.list(filters),
           repository.getEngineConfig(),
         ]);
 
         setAllDevices(fullList);
-        setFilteredDevices(filteredList);
         setEngineConfig(cfg);
 
         setSelectedDeviceId((prev) => {
@@ -175,7 +196,7 @@ export function OperationsWorkspace({
           if (targetId && fullList.some((d) => d.id === targetId)) {
             return targetId;
           }
-          return filteredList[0]?.id ?? fullList[0]?.id ?? null;
+          return fullList[0]?.id ?? null;
         });
       } catch (err) {
         setError(
@@ -185,7 +206,7 @@ export function OperationsWorkspace({
         setIsLoading(false);
       }
     },
-    [repository, filters]
+    [repository]
   );
 
   useEffect(() => {
@@ -207,7 +228,6 @@ export function OperationsWorkspace({
       const fresh = await onResetDemo();
       setFilters({ search: '', category: 'all', decision: 'all', status: 'all' });
       setAllDevices(fresh);
-      setFilteredDevices(fresh);
       setSelectedDeviceId(fresh[0]?.id ?? null);
       setEngineConfig(await repository.getEngineConfig());
       setActiveTab('inventory');

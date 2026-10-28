@@ -165,15 +165,6 @@ function mapDbDevice(row: DbDeviceRow): Device {
 export async function listDevicesServerAction(
   filters?: DeviceFilters
 ): Promise<ActionResponse<Device[]>> {
-  const auth = await getVerifiedServerActor();
-  if (auth.status !== 'authenticated') {
-    return {
-      ok: false,
-      code: 'UNAUTHORIZED',
-      message: 'Authentication required to read production device inventory.',
-    };
-  }
-
   const supabase = await createSupabaseServerClient();
   if (!supabase) {
     return {
@@ -195,7 +186,20 @@ export async function listDevicesServerAction(
     query = query.eq('status', filters.status);
   }
 
-  const { data, error } = await query;
+  const [authRes, queryRes] = await Promise.all([
+    supabase.auth.getUser(),
+    query,
+  ]);
+
+  if (authRes.error || !authRes.data.user) {
+    return {
+      ok: false,
+      code: 'UNAUTHORIZED',
+      message: 'Authentication required to read production device inventory.',
+    };
+  }
+
+  const { data, error } = queryRes;
   if (error) {
     return {
       ok: false,
