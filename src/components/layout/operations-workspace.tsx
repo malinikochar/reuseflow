@@ -115,11 +115,15 @@ export function OperationsWorkspace({
   isDemo,
   fixedActor,
   onResetDemo,
+  initialDevices,
+  initialConfig,
 }: {
   repository: DeviceRepository;
   isDemo: boolean;
   fixedActor?: ActorContext;
   onResetDemo?: () => Promise<Device[]>;
+  initialDevices?: Device[];
+  initialConfig?: EngineConfig;
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -144,25 +148,40 @@ export function OperationsWorkspace({
       await supabase.auth.signOut();
     }
     router.push('/login');
-    router.refresh();
   };
 
-  const [allDevices, setAllDevices] = useState<Device[]>([]);
-  const [selectedDeviceId, setSelectedDeviceId] = useState<string | null>(null);
+  const [allDevices, setAllDevices] = useState<Device[]>(() => initialDevices ?? []);
+  const [selectedDeviceId, setSelectedDeviceId] = useState<string | null>(() => {
+    if (initialDevices && initialDevices.length > 0) {
+      const routeMatch = pathname?.match(/\/devices\/([^/]+)$/);
+      if (routeMatch && routeMatch[1] && routeMatch[1] !== 'new') {
+        const param = decodeURIComponent(routeMatch[1]).toLowerCase();
+        const matched = initialDevices.find(
+          (d) => d.id.toLowerCase() === param || d.assetTag.toLowerCase() === param
+        );
+        if (matched) return matched.id;
+      }
+      return initialDevices[0]?.id ?? null;
+    }
+    return null;
+  });
   const [filters, setFilters] = useState<DeviceFilters>({
     search: '',
     category: 'all',
     decision: 'all',
     status: 'all',
   });
-  const [engineConfig, setEngineConfig] = useState<EngineConfig>(DEFAULT_ENGINE_CONFIG);
+  const [engineConfig, setEngineConfig] = useState<EngineConfig>(
+    () => initialConfig ?? DEFAULT_ENGINE_CONFIG
+  );
 
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState<boolean>(() => !initialDevices);
   const [isBusy, setIsBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const detailPanelRef = useRef<HTMLDivElement | null>(null);
+  const didHydrateInitialRef = useRef<boolean>(Boolean(initialDevices));
 
   const filteredDevices = useMemo(() => {
     return allDevices.filter((d) => {
@@ -229,6 +248,10 @@ export function OperationsWorkspace({
   );
 
   useEffect(() => {
+    if (didHydrateInitialRef.current) {
+      didHydrateInitialRef.current = false;
+      return;
+    }
     void loadWorkspaceData();
   }, [loadWorkspaceData]);
 

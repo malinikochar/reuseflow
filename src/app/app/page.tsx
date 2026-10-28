@@ -3,14 +3,22 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { ArrowRight, Database, FlaskConical, Lock } from 'lucide-react';
 import { getVerifiedServerActor } from '@/lib/auth/session';
+import {
+  getEngineConfigServerAction,
+  listDevicesServerAction,
+} from '@/lib/actions/device-actions';
 import { AuthenticatedClientWorkspace } from './client-workspace';
 
 export default async function AuthenticatedAppPage() {
-  const auth = await getVerifiedServerActor();
+  const [auth, devicesRes, initialConfig] = await Promise.all([
+    getVerifiedServerActor(),
+    listDevicesServerAction(),
+    getEngineConfigServerAction(),
+  ]);
 
   if (auth.status === 'unconfigured') {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#FAFAFA] p-6">
+      <div className="min-h-screen flex items-center justify-center bg-[#F5F5F7] p-6">
         <div className="max-w-lg w-full genesis-card p-6 space-y-4">
           <div className="inline-flex items-center gap-2 rounded-full bg-[#F59E0B]/15 px-3 py-1 text-[12px] font-medium text-[#92400E]">
             <Database className="h-3.5 w-3.5 text-[#F59E0B]" aria-hidden="true" />
@@ -56,5 +64,11 @@ export default async function AuthenticatedAppPage() {
     redirect('/login');
   }
 
-  return <AuthenticatedClientWorkspace actor={auth.actor} />;
+  return (
+    <AuthenticatedClientWorkspace
+      actor={auth.actor}
+      initialDevices={devicesRes.ok ? devicesRes.data : undefined}
+      initialConfig={initialConfig}
+    />
+  );
 }

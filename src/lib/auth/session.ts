@@ -1,3 +1,4 @@
+import { cache } from 'react';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { getSupabasePublicConfig } from '@/lib/supabase/config';
 import { ActorContext } from '@/lib/repositories/types';
@@ -12,8 +13,9 @@ export type ServerAuthResolution =
 /**
  * Verifies user identity on the server via supabase.auth.getUser() (never getSession().user)
  * and resolves the authoritative role from public.profiles.
+ * Wrapped in React cache() to deduplicate within a single server render or action pass.
  */
-export async function getVerifiedServerActor(): Promise<ServerAuthResolution> {
+export const getVerifiedServerActor = cache(async (): Promise<ServerAuthResolution> => {
   const { isConfigured } = getSupabasePublicConfig();
   if (!isConfigured) {
     return { status: 'unconfigured' };
@@ -55,4 +57,4 @@ export async function getVerifiedServerActor(): Promise<ServerAuthResolution> {
     },
     email: user.email,
   };
-}
+});
