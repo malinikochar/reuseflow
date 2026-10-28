@@ -30,8 +30,14 @@ export function DeviceIntakeQuickEdit({
   const [ramGb, setRamGb] = useState<string>(
     device.ramGb !== null ? String(device.ramGb) : ''
   );
+  const [storagePresent, setStoragePresent] = useState<boolean>(
+    device.storagePresent
+  );
   const [storageGb, setStorageGb] = useState<string>(
     device.storageGb !== null ? String(device.storageGb) : ''
+  );
+  const [chargerIncluded, setChargerIncluded] = useState<boolean>(
+    Boolean(device.chargerIncluded)
   );
   const [boots, setBoots] = useState<'true' | 'false' | 'unknown'>(
     device.boots === null ? 'unknown' : device.boots ? 'true' : 'false'
@@ -58,7 +64,9 @@ export function DeviceIntakeQuickEdit({
 
   useEffect(() => {
     setRamGb(device.ramGb !== null ? String(device.ramGb) : '');
+    setStoragePresent(device.storagePresent);
     setStorageGb(device.storageGb !== null ? String(device.storageGb) : '');
+    setChargerIncluded(Boolean(device.chargerIncluded));
     setBoots(device.boots === null ? 'unknown' : device.boots ? 'true' : 'false');
     setRepairable(
       device.repairable === null ? 'unknown' : device.repairable ? 'true' : 'false'
@@ -95,40 +103,85 @@ export function DeviceIntakeQuickEdit({
     return null;
   }
 
+  const safeParseCents = (raw: string, fieldLabel: string): { ok: true; value: number | null } | { ok: false; error: string } => {
+    const trimmed = raw.trim();
+    if (trimmed === '') return { ok: true, value: null };
+    const parsed = Number.parseFloat(trimmed);
+    if (Number.isNaN(parsed) || parsed < 0 || parsed > 10000) {
+      return {
+        ok: false,
+        error: `${fieldLabel} must be a valid amount between $0.00 and $10,000.00.`,
+      };
+    }
+    return { ok: true, value: Math.round(parsed * 100) };
+  };
+
+  const safeParseInt = (
+    raw: string,
+    fieldLabel: string,
+    maxVal: number
+  ): { ok: true; value: number | null } | { ok: false; error: string } => {
+    const trimmed = raw.trim();
+    if (trimmed === '') return { ok: true, value: null };
+    const parsed = Number.parseInt(trimmed, 10);
+    if (Number.isNaN(parsed) || parsed < 0 || parsed > maxVal) {
+      return {
+        ok: false,
+        error: `${fieldLabel} must be a whole number between 0 and ${maxVal}.`,
+      };
+    }
+    return { ok: true, value: parsed };
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
 
-    const parsedParts =
-      partsDollars.trim() === ''
-        ? null
-        : Math.max(0, Math.round(Number.parseFloat(partsDollars) * 100));
-    const parsedLabor =
-      laborMinutes.trim() === ''
-        ? null
-        : Math.max(0, Math.round(Number.parseInt(laborMinutes, 10)));
-    const parsedComp =
-      compDollars.trim() === ''
-        ? null
-        : Math.max(0, Math.round(Number.parseFloat(compDollars) * 100));
-    const parsedRam =
-      ramGb.trim() === '' ? null : Math.max(0, Math.round(Number.parseInt(ramGb, 10)));
-    const parsedStorage =
-      !device.storagePresent || storageGb.trim() === ''
-        ? null
-        : Math.max(0, Math.round(Number.parseInt(storageGb, 10)));
+    const partsCheck = safeParseCents(partsDollars, 'Parts Cost');
+    if (!partsCheck.ok) {
+      setErrorMsg(partsCheck.error);
+      return;
+    }
+
+    const compCheck = safeParseCents(compDollars, 'Comparable Value');
+    if (!compCheck.ok) {
+      setErrorMsg(compCheck.error);
+      return;
+    }
+
+    const laborCheck = safeParseInt(laborMinutes, 'Estimated Labor Minutes', 2000);
+    if (!laborCheck.ok) {
+      setErrorMsg(laborCheck.error);
+      return;
+    }
+
+    const ramCheck = safeParseInt(ramGb, 'RAM (GB)', 1024);
+    if (!ramCheck.ok) {
+      setErrorMsg(ramCheck.error);
+      return;
+    }
+
+    const storageCheck = storagePresent
+      ? safeParseInt(storageGb, 'Storage Capacity (GB)', 32768)
+      : { ok: true as const, value: null };
+    if (!storageCheck.ok) {
+      setErrorMsg(storageCheck.error);
+      return;
+    }
 
     const res = await onSaveAndReassess({
       id: device.id,
-      ramGb: parsedRam,
-      storageGb: parsedStorage,
+      ramGb: ramCheck.value,
+      storagePresent,
+      storageGb: storageCheck.value,
+      chargerIncluded,
       boots: boots === 'unknown' ? null : boots === 'true',
       repairable: repairable === 'unknown' ? null : repairable === 'true',
       condition,
       batterySafety,
-      partsCostCents: parsedParts,
-      estimatedLaborMinutes: parsedLabor,
-      comparableValueCents: parsedComp,
+      partsCostCents: partsCheck.value,
+      estimatedLaborMinutes: laborCheck.value,
+      comparableValueCents: compCheck.value,
     });
 
     if (res.ok) {
@@ -152,7 +205,7 @@ export function DeviceIntakeQuickEdit({
                 </>
               ) : (
                 <>
-                  Need to adjust bench diagnostic specs (RAM, parts cost, labor minutes, or comparable value) and re-score?
+                  Need to adjust bench diagnostic specs (RAM, storage, parts cost, labor minutes, or comparable value) and re-score?
                 </>
               )}
             </span>
@@ -268,7 +321,7 @@ export function DeviceIntakeQuickEdit({
                 type="number"
                 step="1"
                 min="0"
-                max="600"
+                max="2000"
                 value={laborMinutes}
                 onChange={(e) => setLaborMinutes(e.target.value)}
                 placeholder="e.g. 30"
@@ -277,7 +330,7 @@ export function DeviceIntakeQuickEdit({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div>
               <label
                 htmlFor="quick-edit-ram"
@@ -296,6 +349,68 @@ export function DeviceIntakeQuickEdit({
               />
             </div>
 
+            <div>
+              <label
+                htmlFor="quick-edit-storage-present"
+                className="block text-[12px] font-medium text-[#0A0A0A] mb-1"
+              >
+                Storage Drive Present
+              </label>
+              <select
+                id="quick-edit-storage-present"
+                value={storagePresent ? 'yes' : 'no'}
+                onChange={(e) => {
+                  const present = e.target.value === 'yes';
+                  setStoragePresent(present);
+                  if (!present) setStorageGb('');
+                }}
+                className="genesis-input w-full min-h-[40px]"
+              >
+                <option value="yes">Yes (Drive Installed)</option>
+                <option value="no">No Drive</option>
+              </select>
+            </div>
+
+            <div>
+              <label
+                htmlFor="quick-edit-storage-gb"
+                className="block text-[12px] font-medium text-[#0A0A0A] mb-1"
+              >
+                Storage Capacity (GB)
+              </label>
+              <input
+                id="quick-edit-storage-gb"
+                type="number"
+                min="0"
+                max="32768"
+                disabled={!storagePresent}
+                value={storagePresent ? storageGb : ''}
+                onChange={(e) => setStorageGb(e.target.value)}
+                placeholder={storagePresent ? '256' : 'N/A'}
+                className="genesis-input w-full min-h-[40px] disabled:bg-[#FAFAFA] disabled:text-[#9C9C9C]"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="quick-edit-charger"
+                className="block text-[12px] font-medium text-[#0A0A0A] mb-1"
+              >
+                Power Adapter / Charger
+              </label>
+              <select
+                id="quick-edit-charger"
+                value={chargerIncluded ? 'yes' : 'no'}
+                onChange={(e) => setChargerIncluded(e.target.value === 'yes')}
+                className="genesis-input w-full min-h-[40px]"
+              >
+                <option value="yes">Included</option>
+                <option value="no">Missing</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div>
               <label
                 htmlFor="quick-edit-boots"
@@ -358,7 +473,7 @@ export function DeviceIntakeQuickEdit({
               </select>
             </div>
 
-            <div className="col-span-2 sm:col-span-1">
+            <div>
               <label
                 htmlFor="quick-edit-battery"
                 className="block text-[12px] font-medium text-[#0A0A0A] mb-1"

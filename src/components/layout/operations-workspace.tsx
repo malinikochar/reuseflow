@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import {
   Activity,
   Calculator,
@@ -18,6 +18,7 @@ import {
   Menu,
   PlusCircle,
   Printer,
+  RefreshCw,
   ShieldCheck,
   SlidersHorizontal,
   Sparkles,
@@ -121,7 +122,12 @@ export function OperationsWorkspace({
   onResetDemo?: () => Promise<Device[]>;
 }) {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<WorkspaceTab>('inventory');
+  const pathname = usePathname();
+  const [activeTab, setActiveTab] = useState<WorkspaceTab>(() => {
+    if (pathname?.endsWith('/devices/new')) return 'intake';
+    if (pathname?.endsWith('/settings')) return 'scenario';
+    return 'inventory';
+  });
   const [workbenchSubTab, setWorkbenchSubTab] = useState<WorkbenchSubTab>('all');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -199,6 +205,16 @@ export function OperationsWorkspace({
           if (targetId && fullList.some((d) => d.id === targetId)) {
             return targetId;
           }
+          // Check if URL matches /app/devices/[id]
+          const routeMatch = pathname?.match(/\/devices\/([^/]+)$/);
+          if (routeMatch && routeMatch[1] && routeMatch[1] !== 'new') {
+            const param = decodeURIComponent(routeMatch[1]).toLowerCase();
+            const matched = fullList.find(
+              (d) =>
+                d.id.toLowerCase() === param || d.assetTag.toLowerCase() === param
+            );
+            if (matched) return matched.id;
+          }
           return fullList[0]?.id ?? null;
         });
       } catch (err) {
@@ -209,7 +225,7 @@ export function OperationsWorkspace({
         setIsLoading(false);
       }
     },
-    [repository]
+    [repository, pathname]
   );
 
   useEffect(() => {
@@ -391,6 +407,30 @@ export function OperationsWorkspace({
         return { ok: true };
       }
       return { ok: false, message: res.message };
+    } finally {
+      setIsBusy(false);
+    }
+  };
+
+  const handleBatchReassessQueue = async () => {
+    if (activeActor.role === 'viewer') return;
+    setIsBusy(true);
+    setToastMessage(null);
+    try {
+      const openUnits = allDevices.filter(
+        (d) => d.status === 'intake' || d.status === 'assessed'
+      );
+      for (const unit of openUnits) {
+        await repository.assessDevice(unit.id, activeActor, engineConfig);
+      }
+      await loadWorkspaceData(selectedDevice?.id);
+      setToastMessage(
+        `Batch re-evaluated ${openUnits.length} open queue ${
+          openUnits.length === 1 ? 'device' : 'devices'
+        } against Rule v${engineConfig.ruleVersion} ($${(
+          engineConfig.hourlyRateCents / 100
+        ).toFixed(0)}/hr labor, $${(engineConfig.minMarginCents / 100).toFixed(0)} min margin).`
+      );
     } finally {
       setIsBusy(false);
     }
@@ -760,6 +800,22 @@ export function OperationsWorkspace({
                     </p>
                   </div>
                   <div className="flex flex-wrap items-center gap-2 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => void handleBatchReassessQueue()}
+                      disabled={isBusy || activeActor.role === 'viewer'}
+                      className="genesis-btn-secondary inline-flex items-center gap-1.5 px-3.5 py-2.5 text-[13px] disabled:opacity-50 cursor-pointer"
+                      title="Re-evaluate all intake and assessed queue devices against current v1.0.0 engine parameters"
+                    >
+                      <RefreshCw
+                        className={cn(
+                          'h-4 w-4 text-[#6366F1]',
+                          isBusy && 'animate-spin'
+                        )}
+                        aria-hidden="true"
+                      />
+                      Batch Re-Score Queue
+                    </button>
                     <button
                       type="button"
                       onClick={() => selectTab('scenario')}

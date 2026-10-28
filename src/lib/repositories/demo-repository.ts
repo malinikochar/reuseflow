@@ -423,6 +423,19 @@ export class DemoDeviceRepository implements DeviceRepository {
         note: `Re-assessed with rule v${evalResult.ruleVersion}: ${evalResult.decision}.`,
         createdAt: now,
       });
+    } else if (existing.status === 'assessed' && evalResult.decision === 'INSUFFICIENT_DATA') {
+      nextStatus = 'intake';
+      nextEvents.push({
+        id: `demo-event-${Date.now()}`,
+        deviceId: existing.id,
+        fromStatus: 'assessed',
+        toStatus: 'intake',
+        actorId: actor.id,
+        actorName: actor.name,
+        actorRole: actor.role,
+        note: `Returned to intake draft because required fields are missing (${evalResult.missingFields.join(', ')}).`,
+        createdAt: now,
+      });
     }
 
     const updatedDevice: Device = {

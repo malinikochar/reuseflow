@@ -577,6 +577,9 @@ export async function assessDeviceServerAction(
   } else if (existing.status === 'intake' && evalResult.decision !== 'INSUFFICIENT_DATA') {
     nextStatus = 'assessed';
     statusNote = `Re-assessed with rule v${evalResult.ruleVersion}: ${evalResult.decision}.`;
+  } else if (existing.status === 'assessed' && evalResult.decision === 'INSUFFICIENT_DATA') {
+    nextStatus = 'intake';
+    statusNote = `Returned to intake draft because required fields are missing (${evalResult.missingFields.join(', ')}).`;
   }
 
   if (nextStatus !== existing.status && statusNote) {

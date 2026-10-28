@@ -153,6 +153,28 @@ describe('Role Authorization, Transition Preconditions & RLS Policy Integrity', 
     }
   });
 
+  it('reverts device status from assessed back to intake if re-assessment yields INSUFFICIENT_DATA', async () => {
+    const repo = new DemoDeviceRepository();
+    const devices = await repo.list();
+    // Case B starts in 'assessed'
+    const caseB = devices.find((d) => d.assetTag === 'FG-DEMO-102')!;
+    expect(caseB.status).toBe('assessed');
+
+    const updateRes = await repo.updateIntake(
+      caseB.id,
+      { id: caseB.id, comparableValueCents: null },
+      techActor
+    );
+    expect(updateRes.ok).toBe(true);
+
+    const assessRes = await repo.assessDevice(caseB.id, techActor);
+    expect(assessRes.ok).toBe(true);
+    if (assessRes.ok) {
+      expect(assessRes.data.assessment.decision).toBe('INSUFFICIENT_DATA');
+      expect(assessRes.data.device.status).toBe('intake');
+    }
+  });
+
   it('verifies SQL migration file enables RLS on all 6 tables, revokes anon grants, and protects append-only tables', () => {
     const migrationPath = path.join(
       process.cwd(),

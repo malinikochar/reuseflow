@@ -1,7 +1,8 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo, useState } from 'react';
 import {
+  ArrowUpDown,
   Download,
   Laptop,
   Monitor,
@@ -23,6 +24,31 @@ import {
   WorkflowStatusBadge,
 } from '@/components/shared/badges-and-banners';
 import { cn } from '@/lib/utils';
+
+export type QueueSortOrder =
+  | 'updated_desc'
+  | 'margin_desc'
+  | 'cost_asc'
+  | 'asset_asc';
+
+/**
+ * Pure CSV cell formatter with OWASP CSV formula injection neutralization.
+ * Prefixes non-numeric strings starting with =, +, -, or @ with a leading apostrophe (').
+ */
+export function escapeCsvCell(
+  val: string | number | boolean | null | undefined
+): string {
+  if (val === null || val === undefined) return '';
+  let str = String(val);
+  const isStrictNumber = /^-?\d+(\.\d+)?$/.test(str);
+  if (!isStrictNumber && /^[=+\-@]/.test(str)) {
+    str = `'${str}`;
+  }
+  if (str.includes(',') || str.includes('"') || str.includes('\n') || str.includes('\r')) {
+    return `"${str.replace(/"/g, '""')}"`;
+  }
+  return str;
+}
 
 export function CategoryIcon({ category }: { category: DeviceCategory }) {
   if (category === 'laptop') {
@@ -63,15 +89,6 @@ export function CsvExportButton({
       'Workflow_Status',
     ];
 
-    const escapeCsv = (val: string | number | boolean | null | undefined) => {
-      if (val === null || val === undefined) return '';
-      const str = String(val);
-      if (str.includes(',') || str.includes('"') || str.includes('\n')) {
-        return `"${str.replace(/"/g, '""')}"`;
-      }
-      return str;
-    };
-
     const rows = devices.map((d) => [
       isDemo ? 'FICTIONAL_SAMPLE_DEMO_DATA' : 'INTERNAL_OPERATIONS_RECORD',
       d.assetTag,
@@ -101,7 +118,7 @@ export function CsvExportButton({
 
     const csvContent = [
       headers.join(','),
-      ...rows.map((r) => r.map(escapeCsv).join(',')),
+      ...rows.map((r) => r.map(escapeCsvCell).join(',')),
     ].join('\n');
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -146,8 +163,44 @@ export function DeviceFiltersBar({
   filteredCount: number;
   rightSlot?: React.ReactNode;
 }) {
+  const quickDecisionPills: Array<{ label: string; decision: Decision | 'all' }> = [
+    { label: 'All Recommendations', decision: 'all' },
+    { label: 'Viable Refurb', decision: 'REFURBISH_CANDIDATE' },
+    { label: 'Missing Data', decision: 'INSUFFICIENT_DATA' },
+    { label: 'Safety Quarantine', decision: 'QUARANTINE' },
+    { label: 'Review Required', decision: 'REVIEW_REQUIRED' },
+    { label: 'Recycle Review', decision: 'RECYCLE_REVIEW' },
+  ];
+
   return (
     <div className="genesis-card p-5 space-y-4">
+      {/* 1-Click Quick Decision Filter Pills */}
+      <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-[#E8E8EC]">
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-[#6B6B6B] mr-1">
+            Quick Triage Filter:
+          </span>
+          {quickDecisionPills.map((pill) => {
+            const isActive = (filters.decision ?? 'all') === pill.decision;
+            return (
+              <button
+                key={pill.decision}
+                type="button"
+                onClick={() => onChange({ ...filters, decision: pill.decision })}
+                className={cn(
+                  'rounded-full px-2.5 py-1 text-[11px] font-medium transition-colors cursor-pointer',
+                  isActive
+                    ? 'bg-[#0A0A0A] text-[#FFFFFF]'
+                    : 'bg-[#F4F4F6] text-[#6B6B6B] hover:bg-[#E8E8EC] hover:text-[#0A0A0A]'
+                )}
+              >
+                {pill.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div>
           <label
@@ -296,6 +349,29 @@ export function DeviceTable({
   selectedDeviceId?: string | null;
   onSelectDevice: (device: Device) => void;
 }) {
+  const [sortOrder, setSortOrder] = useState<QueueSortOrder>('updated_desc');
+
+  const sortedDevices = useMemo(() => {
+    const copy = [...devices];
+    copy.sort((a, b) => {
+      if (sortOrder === 'margin_desc') {
+        const ma = a.latestAssessment?.marginCents ?? -9999999;
+        const mb = b.latestAssessment?.marginCents ?? -9999999;
+        return mb - ma;
+      }
+      if (sortOrder === 'cost_asc') {
+        const ca = a.latestAssessment?.repairCostCents ?? 9999999;
+        const cb = b.latestAssessment?.repairCostCents ?? 9999999;
+        return ca - cb;
+      }
+      if (sortOrder === 'asset_asc') {
+        return a.assetTag.localeCompare(b.assetTag);
+      }
+      return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+    });
+    return copy;
+  }, [devices, sortOrder]);
+
   if (devices.length === 0) {
     return (
       <EmptyState
@@ -307,6 +383,30 @@ export function DeviceTable({
 
   return (
     <div className="genesis-card overflow-hidden">
+      {/* Table Header Bar with Sort Selector */}
+      <div className="px-4 py-2.5 border-b border-[#E8E8EC] bg-[#FFFFFF] flex flex-wrap items-center justify-between gap-2">
+        <span className="text-[12px] font-semibold text-[#0A0A0A]">
+          Active Triage Queue ({sortedDevices.length} {sortedDevices.length === 1 ? 'unit' : 'units'})
+        </span>
+        <div className="flex items-center gap-2 text-[12px]">
+          <ArrowUpDown className="h-3.5 w-3.5 text-[#6366F1]" aria-hidden="true" />
+          <label htmlFor="queue-sort-select" className="text-[#6B6B6B]">
+            Sort Queue:
+          </label>
+          <select
+            id="queue-sort-select"
+            value={sortOrder}
+            onChange={(e) => setSortOrder(e.target.value as QueueSortOrder)}
+            className="rounded-[6px] border border-[#E8E8EC] bg-[#FAFAFA] px-2.5 py-1 text-[12px] font-medium text-[#0A0A0A] focus:outline-none focus:ring-2 focus:ring-[#6366F1]"
+          >
+            <option value="updated_desc">Recently Updated</option>
+            <option value="margin_desc">Highest Net Margin First</option>
+            <option value="cost_asc">Lowest Repair Cost First</option>
+            <option value="asset_asc">Asset Tag (A–Z)</option>
+          </select>
+        </div>
+      </div>
+
       {/* Desktop Table */}
       <div className="hidden md:block overflow-x-auto">
         <table className="w-full text-left border-collapse">
@@ -322,7 +422,7 @@ export function DeviceTable({
             </tr>
           </thead>
           <tbody className="divide-y divide-[#E8E8EC] text-[14px]">
-            {devices.map((device) => {
+            {sortedDevices.map((device) => {
               const isSelected = device.id === selectedDeviceId;
               const latest = device.latestAssessment;
 
@@ -441,7 +541,7 @@ export function DeviceTable({
 
       {/* Mobile Stacked Cards (375px safe, zero horizontal overflow) */}
       <div className="md:hidden divide-y divide-[#E8E8EC]">
-        {devices.map((device) => {
+        {sortedDevices.map((device) => {
           const isSelected = device.id === selectedDeviceId;
           const latest = device.latestAssessment;
 

@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 
-test.describe('ReuseFlow End-to-End Judge Smoke Walkthrough (/ -> /demo)', () => {
-  test('completes full 90-second judge journey: landing -> demo -> intake -> explainable assessment -> approval -> Scenario Lab -> reset', async ({
+test.describe('ReuseFlow End-to-End Judge Smoke Walkthrough (/ -> /demo & /app)', () => {
+  test('completes full judge journey: landing -> demo -> quick triage filters -> AI & Web Research -> intake -> approval -> Scenario Lab -> reset', async ({
     page,
   }) => {
     // 1. Open landing page and click Try Interactive Demo
@@ -22,6 +22,14 @@ test.describe('ReuseFlow End-to-End Judge Smoke Walkthrough (/ -> /demo)', () =>
       page.getByText('Net Refurbishment Value Unlocked').first()
     ).toBeVisible();
 
+    // 2a. Test Quick Triage Filter Pills & Batch Re-Score Queue
+    await page.getByRole('button', { name: 'Missing Data', exact: true }).click();
+    await expect(page.getByText('FG-DEMO-105').first()).toBeVisible();
+    await page.getByRole('button', { name: 'All Recommendations', exact: true }).click();
+
+    await page.getByRole('button', { name: /Batch Re-Score Queue/i }).click();
+    await expect(page.getByText(/Batch re-evaluated/i)).toBeVisible();
+
     // 2b. Select Case E (FG-DEMO-105) with missing comparable value, complete intake specs, and verify reassessment
     await page.getByText('FG-DEMO-105').first().click();
     await page
@@ -34,6 +42,22 @@ test.describe('ReuseFlow End-to-End Judge Smoke Walkthrough (/ -> /demo)', () =>
     await expect(
       page.getByText(/Updated intake specs for FG-DEMO-105 and re-evaluated v1\.0\.0: REFURBISH_CANDIDATE/i)
     ).toBeVisible();
+
+    // 2c. Open AI & Web Research (Tavily + Nebius) tab and execute live bench research
+    await page.getByRole('button', { name: /AI & Web Research/i }).first().click();
+    await expect(
+      page.getByRole('heading', { name: /AI Bench Research & Market Comps Copilot/i })
+    ).toBeVisible();
+    await page.getByTestId('run-device-research-btn').click();
+    await expect(page.getByTestId('device-research-results')).toBeVisible({
+      timeout: 20000,
+    });
+    await expect(
+      page.getByText(/Advisory Secondary-Market Comparable Range/i)
+    ).toBeVisible();
+
+    // Return to Inventory & Triage tab
+    await page.getByRole('button', { name: /Inventory & Triage/i }).first().click();
 
     // 3. Click New Device Intake and create a safe viable laptop
     await page.getByRole('button', { name: /New Device Intake/i }).click();

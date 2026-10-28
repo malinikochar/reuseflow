@@ -57,7 +57,9 @@ export function validateWorkflowTransition(params: {
   device: Pick<
     Device,
     'status' | 'storagePresent' | 'sanitizationStatus' | 'batterySafety'
-  >;
+  > & {
+    latestAssessment?: { decision?: string } | null;
+  };
   expectedStatus: WorkflowStatus;
   nextStatus: WorkflowStatus;
   actorRole: UserRole;
@@ -116,6 +118,19 @@ export function validateWorkflowTransition(params: {
     };
   }
 
+  // 5b. Missing critical inputs guard: INSUFFICIENT_DATA cannot move to approved_refurb, repairing, or ready
+  if (
+    device.latestAssessment?.decision === 'INSUFFICIENT_DATA' &&
+    (nextStatus === 'approved_refurb' || nextStatus === 'repairing' || nextStatus === 'ready')
+  ) {
+    return {
+      ok: false,
+      code: 'VALIDATION',
+      message:
+        'Missing critical inputs gate locked: Complete all required intake and cost fields and re-evaluate before approving refurbishment.',
+    };
+  }
+
   // 6. Data sanitization gate: storage-bearing devices cannot reach 'ready' or 'closed' until sanitization is verified
   if (
     device.storagePresent &&
@@ -135,7 +150,8 @@ export function validateWorkflowTransition(params: {
     return {
       ok: false,
       code: 'VALIDATION',
-      message: 'Closing a device requires recording an authorized disposition (distributed, recycled, or other_authorized).',
+      message:
+        'Closing a device requires recording an authorized disposition (distributed, recycled, or other_authorized).',
     };
   }
 
@@ -163,7 +179,8 @@ export function validateSanitizationUpdate(params: {
     return {
       ok: false,
       code: 'FORBIDDEN',
-      message: 'Only a Refurbishment Manager can verify or override external data sanitization status.',
+      message:
+        'Only a Refurbishment Manager can verify or override external data sanitization status.',
     };
   }
 
@@ -171,7 +188,8 @@ export function validateSanitizationUpdate(params: {
     return {
       ok: false,
       code: 'VALIDATION',
-      message: 'Cannot mark sanitization as not_applicable while storage media is present on the device.',
+      message:
+        'Cannot mark sanitization as not_applicable while storage media is present on the device.',
     };
   }
 
@@ -179,7 +197,8 @@ export function validateSanitizationUpdate(params: {
     return {
       ok: false,
       code: 'VALIDATION',
-      message: 'Please record the external sanitization method/reference in the verification note (min 5 characters).',
+      message:
+        'Please record the external sanitization method/reference in the verification note (min 5 characters).',
     };
   }
 
