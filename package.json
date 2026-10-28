@@ -2,6 +2,8 @@
   "name": "reuseflow",
   "version": "1.0.0",
   "private": true,
+  "license": "GPL-3.0-only",
+  "author": "Ritesh Kochar <ensure01@gmail.com>",
   "description": "ReuseFlow — Smart Refurbishment Decision Engine (FUSE Society Blueprint 2026 MVP)",
   "scripts": {
     "dev": "next dev",

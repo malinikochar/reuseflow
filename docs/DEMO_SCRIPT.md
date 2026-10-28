@@ -31,19 +31,21 @@
 3. **Human Manager Approval & Audit Trail:**
    - Under **Human Workflow Review & Gate Controls**, select **Approve for Refurbishment (`approved_refurb`)**, enter an audit note, and click **Approve**. Show the new immutable event in the **Append-Only Workflow Audit Timeline**.
    - Switch **Simulate Role** in the top bar to `Technician` or `Viewer` to demonstrate that unauthorized roles are blocked from manager approvals.
-4. **Safety Quarantine & Sanitization Gate (`Case C` & `Case F`):**
+4. **Safety Quarantine, Missing Input Recovery & Sanitization Gate (`Case C`, `Case E` & `Case F`):**
    - Select `FG-DEMO-103` (`Case C — Swollen Battery`). Highlight the amber **Safety Quarantine Active** alert and explain that swollen batteries trigger `QUARANTINE` *before* any economic scoring.
+   - Select `FG-DEMO-105` (`Case E — Missing Comparable Value`). Click **Complete Missing Intake Specs**, enter `$140.00`, and click **Save Specs & Re-Evaluate v1.0.0** to watch it transition live from `INSUFFICIENT_DATA` (`intake`) to `REFURBISH_CANDIDATE` (`assessed`).
    - Select `FG-DEMO-106` (`Case F — Pending Sanitization`). Show that while it is economically a `REFURBISH_CANDIDATE`, the **Ready / Disposition Sanitization Gate** blocks moving to `ready` until a manager records external sanitization verification.
 
-## 4:35–5:50 — 4. Scenario Lab & Financial Assumptions
+## 4:35–5:50 — 4. Scenario Lab, Strategic Alternatives & Financial Assumptions
 - Click **Scenario Lab**.
 - Show the default seed calculation: 100 devices/month, 12 min manual baseline vs. 6 min structured target, $20/hour labor rate -> **10 hours/month** and **$200.00/month** in hypothetical bench capacity value.
 - Adjust the **Monthly Device Volume** slider to 200 devices/month and add realistic one-time implementation ($1,200) and monthly hosting ($40) costs to show the live payback calculation.
+- Point to the **Strategic Alternatives Analysis — Refurbishment Triage Operating Model** matrix comparing Status Quo Spreadsheets vs. ReuseFlow v1.0.0 vs. Heavy Custom ERP.
 - Sound bite: *"Every dollar of impact is traceable to an editable assumption—not an invented operational metric."*
 
-## 5:50–6:50 — 5. Technical Architecture, Security & Rollout Risks
-- Highlight the production `/app` architecture:
-  - Supabase Postgres with Row-Level Security (`anon` revoked, `viewer` read-only, `technician` intake-only, `manager` transactional RPC transitions).
+## 5:50–6:50 — 5. Technical Architecture, Live Supabase `/app` & Rollout Risks
+- Highlight the production `/app` architecture (`https://reuseflow.vercel.app/login`):
+  - One-Click Hackathon Demo Login (`Manager`, `Technician`, `Viewer`) backed by live Supabase Postgres (`https://reuseflow-sb.propixer.in`) with Row-Level Security (`anon` revoked, `viewer` read-only, `technician` intake-only, `manager` transactional RPC transitions), Staff Profile Management, and Admin Governance Panel.
   - Append-only database triggers protecting `assessments` and `workflow_events`.
   - Optional P1 manager-triggered Resend operational summary with recipient allowlist and zero PII (show the non-sending **Preview Summary Content** in `/demo`).
 

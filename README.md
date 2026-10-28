@@ -5,7 +5,10 @@
 
 - **Live Production URL:** [https://reuseflow.vercel.app](https://reuseflow.vercel.app)
 - **Public Judge Sandbox (Zero Login):** [https://reuseflow.vercel.app/demo](https://reuseflow.vercel.app/demo)
+- **Staff & One-Click Hackathon Demo Login (`/app`):** [https://reuseflow.vercel.app/login](https://reuseflow.vercel.app/login)
 - **GitHub Repository:** [https://github.com/ensuredesign/reuseflow](https://github.com/ensuredesign/reuseflow)
+- **Author / Contributor:** Ritesh Kochar (`ensure01@gmail.com`)
+- **Open Source License:** [GNU General Public License v3.0 (`GPL-3.0`)](LICENSE)
 
 > **Important Scope & Honesty Disclosure:** ReuseFlow is a working hackathon prototype for a *proposed* internal electronics refurbishment triage workflow. It is **not** an official or endorsed operational system of Free Geek, does **not** perform certified data wiping or automated device disposal, and all sample data in `/demo` are 100% synthetic with zero personal donor/recipient information or real serial numbers. Case-specific alignment in [`docs/CASE_ALIGNMENT.md`](docs/CASE_ALIGNMENT.md) must be validated by an eligible participant against the restricted competitor packet before final presentation recording.
 
@@ -70,8 +73,9 @@ Open `http://localhost:3000` (landing page) or `http://localhost:3000/demo` (zer
 ```bash
 npm run typecheck   # TypeScript strict mode check (tsc --noEmit)
 npm run lint        # ESLint Next.js & TypeScript rules
-npm run test        # Vitest unit & security integration suites (27 tests)
+npm run test        # Vitest unit & security integration suites (28 tests)
 npm run build       # Production Next.js build verification
+npm run test:e2e    # Playwright end-to-end browser verification (3 suites)
 ```
 
 ---
@@ -102,3 +106,9 @@ npm run build       # Production Next.js build verification
 - [ ] Record <= 8:00 presentation following [`docs/DEMO_SCRIPT.md`](docs/DEMO_SCRIPT.md) and upload to YouTube as **Unlisted** (not Private).
 - [ ] Publish the Devpost project page before **October 31, 2026, 12:00 AM EDT (9:30 AM IST)**.
 - [ ] Complete and submit the separate **official competition submission form**, including honest AI disclosure from [`docs/AI_DISCLOSURE.md`](docs/AI_DISCLOSURE.md).
+
+---
+
+## 7. Open Source License
+
+This project is licensed under the **GNU General Public License v3.0 (`GPL-3.0`)** in compliance with open-source hackathon requirements. See the [`LICENSE`](LICENSE) file for full license text.
