@@ -636,6 +636,7 @@ export function OperationsWorkspace({
                     </div>
 
                     <DeviceIntakeQuickEdit
+                      key={`quick-edit-${selectedDevice.id}`}
                       device={selectedDevice}
                       actorRole={activeActor.role}
                       isBusy={isBusy}
@@ -645,6 +646,7 @@ export function OperationsWorkspace({
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
                       <div className="lg:col-span-7 space-y-6">
                         <AssessmentPanel
+                          key={`assessment-panel-${selectedDevice.id}`}
                           device={selectedDevice}
                           engineConfig={engineConfig}
                           actorRole={activeActor.role}
