@@ -4,17 +4,26 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
+  Activity,
   Calculator,
   CheckCircle2,
   ClipboardList,
-  Cpu,
+  Edit3,
+  FileSpreadsheet,
+  History,
+  Layers,
   Lock,
   LogOut,
+  Mail,
+  Menu,
   PlusCircle,
+  Printer,
   ShieldCheck,
   SlidersHorizontal,
+  Sparkles,
   UserCheck,
   UserCog,
+  X,
 } from 'lucide-react';
 import {
   Device,
@@ -33,11 +42,14 @@ import {
 } from '@/lib/validation/schemas';
 import { createSupabaseBrowserClient } from '@/lib/supabase/client';
 import {
+  DecisionBadge,
   DemoModeBanner,
   ErrorState,
   LoadingSkeleton,
+  SanitizationBadge,
   WorkflowStatusBadge,
 } from '@/components/shared/badges-and-banners';
+import { ReuseFlowLogo } from '@/components/shared/reuseflow-logo';
 import {
   OperationsDashboardOverview,
   ScenarioLab,
@@ -61,7 +73,20 @@ import {
 } from '@/components/profile/profile-and-admin-panel';
 import { cn } from '@/lib/utils';
 
-type WorkspaceTab = 'inventory' | 'intake' | 'scenario' | 'profile' | 'admin';
+type WorkspaceTab =
+  | 'inventory'
+  | 'intake'
+  | 'scenario'
+  | 'reports'
+  | 'profile'
+  | 'admin';
+
+type WorkbenchSubTab =
+  | 'all'
+  | 'assessment'
+  | 'workflow'
+  | 'specs'
+  | 'timeline';
 
 const DEMO_ACTORS: Record<UserRole, ActorContext> = {
   manager: {
@@ -94,6 +119,9 @@ export function OperationsWorkspace({
 }) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<WorkspaceTab>('inventory');
+  const [workbenchSubTab, setWorkbenchSubTab] = useState<WorkbenchSubTab>('all');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
   const [demoRole, setDemoRole] = useState<UserRole>('manager');
   const [customActorName, setCustomActorName] = useState<string | null>(null);
   const baseActor: ActorContext = fixedActor ?? DEMO_ACTORS[demoRole];
@@ -167,6 +195,11 @@ export function OperationsWorkspace({
   const selectedDevice =
     allDevices.find((d) => d.id === selectedDeviceId) ?? filteredDevices[0] ?? null;
 
+  const selectTab = (tab: WorkspaceTab) => {
+    setActiveTab(tab);
+    setMobileMenuOpen(false);
+  };
+
   const handleResetDemo = async () => {
     if (!onResetDemo) return;
     setIsBusy(true);
@@ -178,6 +211,7 @@ export function OperationsWorkspace({
       setSelectedDeviceId(fresh[0]?.id ?? null);
       setEngineConfig(await repository.getEngineConfig());
       setActiveTab('inventory');
+      setWorkbenchSubTab('all');
       setToastMessage('Demo sandbox reset to the 6 canonical PRD fictional fixtures.');
     } finally {
       setIsBusy(false);
@@ -198,6 +232,7 @@ export function OperationsWorkspace({
       await loadWorkspaceData(created.id);
       setSelectedDeviceId(created.id);
       setActiveTab('inventory');
+      setWorkbenchSubTab('all');
       setToastMessage(
         `Created ${created.assetTag} (${created.brand} ${created.model}) and ran v1.0.0 assessment: ${created.latestAssessment?.decision}.`
       );
@@ -338,130 +373,105 @@ export function OperationsWorkspace({
     }
   };
 
+  const navItems: Array<{
+    id: WorkspaceTab;
+    label: string;
+    badge?: string;
+    icon: React.ComponentType<{ className?: string }>;
+  }> = [
+    {
+      id: 'inventory',
+      label: `Inventory & Triage (${allDevices.length})`,
+      badge: 'Workbench',
+      icon: ClipboardList,
+    },
+    {
+      id: 'intake',
+      label: 'New Device',
+      badge: '90s Intake',
+      icon: PlusCircle,
+    },
+    {
+      id: 'scenario',
+      label: 'Scenario Lab',
+      badge: 'Economics',
+      icon: Calculator,
+    },
+    {
+      id: 'reports',
+      label: 'Reports & Email',
+      badge: 'Summary',
+      icon: Mail,
+    },
+    {
+      id: 'profile',
+      label: 'My Profile',
+      badge: activeActor.role,
+      icon: UserCog,
+    },
+    {
+      id: 'admin',
+      label: 'Admin Panel',
+      badge: 'Governance',
+      icon: SlidersHorizontal,
+    },
+  ];
+
   return (
     <div className="min-h-screen flex flex-col bg-[#FAFAFA] text-[#0A0A0A]">
       {isDemo && <DemoModeBanner onReset={handleResetDemo} isResetting={isBusy} />}
 
-      {/* Genesis Sticky Top Navigation (56px height, backdrop-blur, 1px border #E8E8EC) */}
-      <header className="no-print sticky top-0 z-20 border-b border-[#E8E8EC] bg-[#FFFFFF]/90 backdrop-blur-md">
-        <div className="max-w-[1280px] mx-auto px-6 min-h-[56px] py-2 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <Link
-                href="/"
-                className="flex items-center gap-2.5 font-display font-bold text-[18px] tracking-[-0.03em] text-[#0A0A0A] hover:text-[#6366F1] transition-colors"
-              >
-                <span className="inline-flex h-8 w-8 items-center justify-center rounded-[6px] bg-[#0A0A0A] text-[#FAFAFA]">
-                  <Cpu className="h-4 w-4" aria-hidden="true" />
-                </span>
-                <span>ReuseFlow</span>
-              </Link>
-              <span className="hidden sm:inline-block h-4 w-px bg-[#E8E8EC]" />
-              <span className="text-[13px] font-medium text-[#6B6B6B]">
-                {isDemo
-                  ? 'Interactive Public Sandbox (/demo)'
-                  : 'Authenticated Operations Workspace (/app)'}
-              </span>
-            </div>
+      {/* Two-Tier Professional SaaS Command Header */}
+      <header className="no-print sticky top-0 z-30 border-b border-[#E8E8EC] bg-[#FFFFFF]/95 backdrop-blur-md shadow-[0_1px_2px_rgba(10,10,10,0.03)]">
+        {/* Tier 1: Brand Identity, Environment Badge, Role Controls & Quick Actions */}
+        <div className="max-w-[1280px] mx-auto px-4 sm:px-6 py-2.5 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <Link
+              href="/"
+              className="group flex items-center gap-2.5 focus:outline-none"
+            >
+              <ReuseFlowLogo
+                size="sm"
+                showVersion
+                subtitle={
+                  isDemo
+                    ? 'Interactive Public Sandbox (/demo)'
+                    : 'Authenticated Operations Workspace (/app)'
+                }
+              />
+            </Link>
 
-            {!isDemo && (
-              <Link
-                href="/demo"
-                className="lg:hidden text-[12px] font-medium text-[#6366F1] hover:underline"
-              >
-                Switch to /demo
-              </Link>
-            )}
+            <span className="hidden xl:inline-flex items-center gap-1.5 rounded-full bg-[#F4F4F6] border border-[#E8E8EC] px-2.5 py-1 text-[11px] font-medium text-[#6B6B6B]">
+              <span
+                className={cn(
+                  'h-2 w-2 rounded-full',
+                  isDemo ? 'bg-[#6366F1]' : 'bg-[#10B981]'
+                )}
+              />
+              {isDemo ? 'Zero-DB Browser Sandbox' : 'Supabase RLS Protected'}
+            </span>
           </div>
 
-          {/* Primary Navigation Chips & Role Switcher */}
-          <div className="flex flex-wrap items-center justify-between lg:justify-end gap-2 sm:gap-3">
-            <nav
-              aria-label="Workspace Views"
-              className="flex items-center gap-1.5 overflow-x-auto max-w-full pb-1 sm:pb-0"
-            >
-              <button
-                type="button"
-                onClick={() => setActiveTab('inventory')}
-                className={cn(
-                  'inline-flex items-center gap-1.5 rounded-full px-3.5 py-2 min-h-[38px] text-[12px] font-medium whitespace-nowrap transition-colors cursor-pointer',
-                  activeTab === 'inventory'
-                    ? 'bg-[#6366F1] text-[#FAFAFA]'
-                    : 'bg-[#F4F4F6] text-[#6B6B6B] hover:text-[#0A0A0A]'
-                )}
-              >
-                <ClipboardList className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                Inventory & Triage ({allDevices.length})
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setActiveTab('intake')}
-                className={cn(
-                  'inline-flex items-center gap-1.5 rounded-full px-3.5 py-2 min-h-[38px] text-[12px] font-medium whitespace-nowrap transition-colors cursor-pointer',
-                  activeTab === 'intake'
-                    ? 'bg-[#6366F1] text-[#FAFAFA]'
-                    : 'bg-[#F4F4F6] text-[#6B6B6B] hover:text-[#0A0A0A]'
-                )}
-              >
-                <PlusCircle className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                New Device
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setActiveTab('scenario')}
-                className={cn(
-                  'inline-flex items-center gap-1.5 rounded-full px-3.5 py-2 min-h-[38px] text-[12px] font-medium whitespace-nowrap transition-colors cursor-pointer',
-                  activeTab === 'scenario'
-                    ? 'bg-[#6366F1] text-[#FAFAFA]'
-                    : 'bg-[#F4F4F6] text-[#6B6B6B] hover:text-[#0A0A0A]'
-                )}
-              >
-                <Calculator className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                Scenario Lab
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setActiveTab('profile')}
-                className={cn(
-                  'inline-flex items-center gap-1.5 rounded-full px-3.5 py-2 min-h-[38px] text-[12px] font-medium whitespace-nowrap transition-colors cursor-pointer',
-                  activeTab === 'profile'
-                    ? 'bg-[#6366F1] text-[#FAFAFA]'
-                    : 'bg-[#F4F4F6] text-[#6B6B6B] hover:text-[#0A0A0A]'
-                )}
-              >
-                <UserCog className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                My Profile
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setActiveTab('admin')}
-                className={cn(
-                  'inline-flex items-center gap-1.5 rounded-full px-3.5 py-2 min-h-[38px] text-[12px] font-medium whitespace-nowrap transition-colors cursor-pointer',
-                  activeTab === 'admin'
-                    ? 'bg-[#6366F1] text-[#FAFAFA]'
-                    : 'bg-[#F4F4F6] text-[#6B6B6B] hover:text-[#0A0A0A]'
-                )}
-              >
-                <SlidersHorizontal className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                Admin Panel
-              </button>
-            </nav>
-
+          {/* Right Controls: Role Switcher / User Profile + Mobile Menu Button */}
+          <div className="flex items-center gap-2 sm:gap-2.5">
             {isDemo ? (
-              <div className="flex items-center gap-1.5 rounded-[6px] border border-[#E8E8EC] bg-[#FAFAFA] px-3 py-1.5 min-h-[38px] text-[12px]">
-                <UserCheck className="h-3.5 w-3.5 text-[#6B6B6B] shrink-0" aria-hidden="true" />
-                <label htmlFor="demo-role-select" className="text-[#6B6B6B] font-medium">
+              <div className="flex items-center gap-1.5 rounded-[8px] border border-[#E8E8EC] bg-[#FAFAFA] px-2.5 sm:px-3 py-1.5 min-h-[38px] text-[12px]">
+                <UserCheck
+                  className="h-3.5 w-3.5 text-[#6366F1] shrink-0 hidden sm:inline"
+                  aria-hidden="true"
+                />
+                <label
+                  htmlFor="demo-role-select"
+                  className="text-[#6B6B6B] font-medium hidden md:inline"
+                >
                   Simulate Role:
                 </label>
                 <select
                   id="demo-role-select"
+                  aria-label="Simulate Role:"
                   value={demoRole}
                   onChange={(e) => setDemoRole(e.target.value as UserRole)}
-                  className="bg-transparent font-medium text-[#0A0A0A] focus:outline-none cursor-pointer"
+                  className="bg-transparent font-semibold text-[#0A0A0A] focus:outline-none cursor-pointer max-w-[165px] sm:max-w-none truncate"
                 >
                   <option value="manager">Manager (Can Approve & Verify)</option>
                   <option value="technician">Technician (Intake & Assess Only)</option>
@@ -472,14 +482,14 @@ export function OperationsWorkspace({
               <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  onClick={() => setActiveTab('profile')}
-                  className="flex items-center gap-2 rounded-[6px] border border-[#E8E8EC] bg-[#FAFAFA] hover:bg-[#F4F4F6] px-3 py-1.5 min-h-[38px] text-[12px] transition-colors cursor-pointer"
+                  onClick={() => selectTab('profile')}
+                  className="flex items-center gap-2 rounded-[8px] border border-[#E8E8EC] bg-[#FAFAFA] hover:bg-[#F4F4F6] px-2.5 sm:px-3 py-1.5 min-h-[38px] text-[12px] transition-colors cursor-pointer"
                 >
                   <Lock className="h-3.5 w-3.5 text-[#6366F1]" aria-hidden="true" />
-                  <span className="font-medium text-[#0A0A0A] truncate max-w-[160px]">
+                  <span className="font-medium text-[#0A0A0A] truncate max-w-[120px] sm:max-w-[160px]">
                     {activeActor.name}
                   </span>
-                  <span className="rounded-full bg-[#6366F1]/15 px-2 py-0.5 text-[11px] font-medium uppercase text-[#4F46E5]">
+                  <span className="rounded-full bg-[#6366F1]/15 px-2 py-0.5 text-[10px] font-semibold uppercase text-[#4F46E5]">
                     {activeActor.role}
                   </span>
                 </button>
@@ -487,19 +497,169 @@ export function OperationsWorkspace({
                   type="button"
                   onClick={() => void handleSignOut()}
                   aria-label="Sign out of workspace"
-                  className="genesis-btn-secondary inline-flex items-center gap-1.5 px-3 py-1.5 min-h-[38px] text-[12px] cursor-pointer"
+                  className="genesis-btn-secondary inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 min-h-[38px] text-[12px] cursor-pointer"
                 >
                   <LogOut className="h-3.5 w-3.5 text-[#6B6B6B]" aria-hidden="true" />
-                  Sign Out
+                  <span className="hidden sm:inline">Sign Out</span>
                 </button>
               </div>
             )}
+
+            {isDemo && (
+              <Link
+                href="/login"
+                className="hidden md:inline-flex items-center gap-1.5 rounded-[8px] border border-[#E8E8EC] bg-[#FFFFFF] hover:bg-[#FAFAFA] px-3 py-1.5 min-h-[38px] text-[12px] font-medium text-[#0A0A0A] transition-colors"
+              >
+                <Lock className="h-3.5 w-3.5 text-[#6366F1]" aria-hidden="true" />
+                Staff Login (/app)
+              </Link>
+            )}
+
+            {/* Mobile Hamburger Toggle */}
+            <button
+              type="button"
+              onClick={() => setMobileMenuOpen((prev) => !prev)}
+              aria-expanded={mobileMenuOpen}
+              aria-label="Toggle workspace navigation menu"
+              className="lg:hidden inline-flex items-center justify-center rounded-[8px] border border-[#E8E8EC] bg-[#FAFAFA] p-2 text-[#0A0A0A] hover:bg-[#F4F4F6] cursor-pointer"
+            >
+              {mobileMenuOpen ? (
+                <X className="h-4 w-4" aria-hidden="true" />
+              ) : (
+                <Menu className="h-4 w-4" aria-hidden="true" />
+              )}
+            </button>
           </div>
         </div>
+
+        {/* Tier 2: Desktop Primary Feature Menu Tabs */}
+        <div className="border-t border-[#F1F1F4] bg-[#FAFAFA]/70">
+          <div className="max-w-[1280px] mx-auto px-4 sm:px-6 flex items-center justify-between gap-2 overflow-x-auto">
+            <nav
+              aria-label="Workspace Views"
+              className="flex items-center gap-1 py-1.5"
+            >
+              {navItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = activeTab === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => selectTab(item.id)}
+                    className={cn(
+                      'group relative inline-flex items-center gap-2 rounded-[8px] px-3.5 py-2 min-h-[38px] text-[12px] font-semibold whitespace-nowrap transition-all cursor-pointer',
+                      isActive
+                        ? 'bg-[#0A0A0A] text-[#FFFFFF] shadow-xs'
+                        : 'text-[#6B6B6B] hover:bg-[#ECECEF]/80 hover:text-[#0A0A0A]'
+                    )}
+                  >
+                    <Icon
+                      className={cn(
+                        'h-3.5 w-3.5 shrink-0 transition-colors',
+                        isActive
+                          ? 'text-[#818CF8]'
+                          : 'text-[#6B6B6B] group-hover:text-[#0A0A0A]'
+                      )}
+                      aria-hidden="true"
+                    />
+                    <span>{item.label}</span>
+                    {item.badge && (
+                      <span
+                        className={cn(
+                          'hidden xl:inline-block rounded-[4px] px-1.5 py-0.5 text-[10px] font-mono uppercase tracking-tight',
+                          isActive
+                            ? 'bg-[#FFFFFF]/15 text-[#E0E7FF]'
+                            : 'bg-[#FFFFFF] border border-[#E8E8EC] text-[#6B6B6B]'
+                        )}
+                      >
+                        {item.badge}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </nav>
+
+            <div className="hidden lg:flex items-center gap-2 shrink-0 py-1">
+              <span className="text-[11px] font-mono text-[#6B6B6B]">
+                Engine: <strong className="text-[#0A0A0A]">v{engineConfig.ruleVersion}</strong>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Mobile Collapsible Navigation Drawer */}
+        {mobileMenuOpen && (
+          <div className="lg:hidden border-t border-[#E8E8EC] bg-[#FFFFFF] px-4 py-3 space-y-2 shadow-lg">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-[#9C9C9C] px-2">
+              Workspace Modules
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+              {navItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = activeTab === item.id;
+                return (
+                  <button
+                    key={`mobile-${item.id}`}
+                    type="button"
+                    onClick={() => selectTab(item.id)}
+                    className={cn(
+                      'flex items-center justify-between rounded-[8px] px-3 py-2.5 text-[13px] font-medium text-left cursor-pointer',
+                      isActive
+                        ? 'bg-[#6366F1] text-[#FFFFFF]'
+                        : 'bg-[#FAFAFA] text-[#0A0A0A] hover:bg-[#F4F4F6]'
+                    )}
+                  >
+                    <span className="flex items-center gap-2">
+                      <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
+                      {item.label}
+                    </span>
+                    {item.badge && (
+                      <span
+                        className={cn(
+                          'rounded px-1.5 py-0.5 text-[10px] font-mono uppercase',
+                          isActive
+                            ? 'bg-[#FFFFFF]/20 text-[#FFFFFF]'
+                            : 'bg-[#FFFFFF] border border-[#E8E8EC] text-[#6B6B6B]'
+                        )}
+                      >
+                        {item.badge}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+            <div className="pt-2 border-t border-[#E8E8EC] flex items-center justify-between text-[12px]">
+              <Link
+                href="/"
+                className="text-[#6B6B6B] hover:text-[#0A0A0A] font-medium"
+              >
+                ← Back to Overview
+              </Link>
+              {isDemo ? (
+                <Link
+                  href="/login"
+                  className="text-[#6366F1] font-semibold hover:underline"
+                >
+                  Open Staff Login (/app) →
+                </Link>
+              ) : (
+                <Link
+                  href="/demo"
+                  className="text-[#6366F1] font-semibold hover:underline"
+                >
+                  Open Public Sandbox (/demo) →
+                </Link>
+              )}
+            </div>
+          </div>
+        )}
       </header>
 
-      {/* Main Content Area (1280px max width, 24px horizontal padding) */}
-      <main className="flex-1 max-w-[1280px] w-full mx-auto px-6 py-8 space-y-6">
+      {/* Main Content Area (1280px max width) */}
+      <main className="flex-1 max-w-[1280px] w-full mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
         {toastMessage && (
           <div
             role="status"
@@ -532,24 +692,36 @@ export function OperationsWorkspace({
           <LoadingSkeleton rows={5} />
         ) : (
           <>
-            {/* TAB 1: Inventory, Assessment & Approval Workflow */}
+            {/* TAB 1: Inventory, Assessment & Approval Workbench */}
             {activeTab === 'inventory' && (
               <div className="space-y-6">
                 <div className="no-print flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                   <div>
-                    <h1 className="font-display text-[24px] sm:text-[32px] font-bold tracking-[-0.03em] text-[#0A0A0A]">
+                    <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-[#6366F1] mb-1">
+                      <Activity className="h-3.5 w-3.5" aria-hidden="true" />
+                      Refurbishment Operations Command Center
+                    </div>
+                    <h1 className="font-display text-[24px] sm:text-[30px] font-bold tracking-[-0.03em] text-[#0A0A0A]">
                       Device Refurbishment Triage & Decision Queue
                     </h1>
                     <p className="text-[14px] text-[#6B6B6B]">
                       Standardized intake, versioned cost/margin evaluation, safety quarantine gates, and human-approved workflow transitions.
                     </p>
                   </div>
-                  <div className="flex items-center gap-2 shrink-0">
+                  <div className="flex flex-wrap items-center gap-2 shrink-0">
                     <button
                       type="button"
-                      onClick={() => setActiveTab('intake')}
+                      onClick={() => selectTab('scenario')}
+                      className="genesis-btn-secondary inline-flex items-center gap-1.5 px-3.5 py-2.5 text-[13px] cursor-pointer"
+                    >
+                      <Calculator className="h-4 w-4 text-[#6366F1]" aria-hidden="true" />
+                      Open ROI Calculator
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => selectTab('intake')}
                       disabled={activeActor.role === 'viewer'}
-                      className="genesis-btn-primary inline-flex items-center gap-2 px-4 py-2.5 text-[14px] disabled:opacity-50 cursor-pointer"
+                      className="genesis-btn-primary inline-flex items-center gap-2 px-4 py-2.5 text-[13px] disabled:opacity-50 cursor-pointer"
                     >
                       <PlusCircle className="h-4 w-4" aria-hidden="true" />
                       New Device Intake
@@ -590,72 +762,223 @@ export function OperationsWorkspace({
                   />
                 </div>
 
-                {/* Active Device Inspection Drawer / Detail View */}
+                {/* Active Device Inspection Workbench */}
                 {selectedDevice && (
                   <div
                     ref={detailPanelRef}
-                    className="pt-4 border-t border-[#E8E8EC] space-y-5"
+                    className="pt-6 border-t-2 border-[#E8E8EC] space-y-4"
                   >
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 genesis-card px-6 py-4">
-                      <div>
-                        <div className="flex flex-wrap items-center gap-2.5">
-                          <span className="font-mono text-[12px] font-medium text-[#0A0A0A] bg-[#FAFAFA] border border-[#E8E8EC] rounded-[4px] px-2.5 py-0.5">
-                            {selectedDevice.assetTag}
-                          </span>
-                          <h2 className="font-display text-[20px] font-bold text-[#0A0A0A]">
-                            {selectedDevice.brand} {selectedDevice.model}
-                          </h2>
-                          <WorkflowStatusBadge status={selectedDevice.status} />
-                        </div>
-                        <p className="mt-1 text-[13px] text-[#6B6B6B]">
-                          Category:{' '}
-                          <span className="font-medium text-[#0A0A0A] capitalize">
-                            {selectedDevice.category}
-                          </span>{' '}
-                          · RAM:{' '}
-                          <span className="font-mono text-[#0A0A0A]">
-                            {selectedDevice.ramGb !== null
-                              ? `${selectedDevice.ramGb} GB`
-                              : 'Unrecorded'}
-                          </span>{' '}
-                          · Storage:{' '}
-                          <span className="font-mono text-[#0A0A0A]">
-                            {selectedDevice.storagePresent
-                              ? `${selectedDevice.storageGb ?? '?'} GB Installed`
-                              : 'None'}
-                          </span>{' '}
-                          · Condition:{' '}
-                          <span className="font-medium text-[#0A0A0A] capitalize">
-                            {selectedDevice.condition}
-                          </span>
-                        </p>
-                      </div>
-                      <span className="text-[12px] text-[#9C9C9C]">
-                        Record ID: <code className="font-mono">{selectedDevice.id}</code>
+                    {/* Quick-Switch Device Pill Bar */}
+                    <div className="no-print flex flex-wrap items-center justify-between gap-2 rounded-[10px] border border-[#E8E8EC] bg-[#FFFFFF] px-4 py-2.5">
+                      <span className="text-[11px] font-semibold uppercase tracking-wider text-[#6B6B6B] flex items-center gap-1.5">
+                        <Sparkles className="h-3.5 w-3.5 text-[#6366F1]" aria-hidden="true" />
+                        Quick-Switch Bench Unit:
                       </span>
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        {filteredDevices.map((dev) => {
+                          const isCurrent = dev.id === selectedDevice.id;
+                          const isQuarantine =
+                            dev.status === 'quarantined' ||
+                            dev.latestAssessment?.decision === 'QUARANTINE';
+                          const isMissing =
+                            dev.latestAssessment?.decision === 'INSUFFICIENT_DATA';
+                          return (
+                            <button
+                              key={`pill-${dev.id}`}
+                              type="button"
+                              onClick={() => setSelectedDeviceId(dev.id)}
+                              className={cn(
+                                'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-mono font-medium transition-colors cursor-pointer',
+                                isCurrent
+                                  ? 'bg-[#6366F1] text-[#FFFFFF]'
+                                  : 'bg-[#F4F4F6] text-[#0A0A0A] hover:bg-[#E8E8EC]'
+                              )}
+                            >
+                              <span
+                                className={cn(
+                                  'h-1.5 w-1.5 rounded-full',
+                                  isCurrent
+                                    ? 'bg-[#FFFFFF]'
+                                    : isQuarantine
+                                      ? 'bg-[#F59E0B]'
+                                      : isMissing
+                                        ? 'bg-[#6366F1]'
+                                        : 'bg-[#10B981]'
+                                )}
+                              />
+                              {dev.assetTag}
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
 
-                    <DeviceIntakeQuickEdit
-                      key={`quick-edit-${selectedDevice.id}`}
-                      device={selectedDevice}
-                      actorRole={activeActor.role}
-                      isBusy={isBusy}
-                      onSaveAndReassess={handleUpdateIntakeAndReassess}
-                    />
+                    {/* Selected Device Summary Header + Workbench Sub-Navigation */}
+                    <div className="genesis-card overflow-hidden">
+                      <div className="px-6 py-4 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 bg-[#FFFFFF]">
+                        <div>
+                          <div className="flex flex-wrap items-center gap-2.5">
+                            <span className="font-mono text-[12px] font-semibold text-[#4F46E5] bg-[#EEF2FF] border border-[#C7D2FE] rounded-[5px] px-2.5 py-0.5">
+                              {selectedDevice.assetTag}
+                            </span>
+                            <h2 className="font-display text-[20px] font-bold text-[#0A0A0A]">
+                              {selectedDevice.brand} {selectedDevice.model}
+                            </h2>
+                            <WorkflowStatusBadge status={selectedDevice.status} />
+                            <DecisionBadge
+                              decision={selectedDevice.latestAssessment?.decision}
+                            />
+                          </div>
+                          <p className="mt-1.5 text-[13px] text-[#6B6B6B]">
+                            Category:{' '}
+                            <span className="font-medium text-[#0A0A0A] capitalize">
+                              {selectedDevice.category}
+                            </span>{' '}
+                            · RAM:{' '}
+                            <span className="font-mono text-[#0A0A0A]">
+                              {selectedDevice.ramGb !== null
+                                ? `${selectedDevice.ramGb} GB`
+                                : 'Unrecorded'}
+                            </span>{' '}
+                            · Storage:{' '}
+                            <span className="font-mono text-[#0A0A0A]">
+                              {selectedDevice.storagePresent
+                                ? `${selectedDevice.storageGb ?? '?'} GB Installed`
+                                : 'None'}
+                            </span>{' '}
+                            · Condition:{' '}
+                            <span className="font-medium text-[#0A0A0A] capitalize">
+                              {selectedDevice.condition}
+                            </span>
+                          </p>
+                        </div>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                      <div className="lg:col-span-7 space-y-6">
-                        <AssessmentPanel
-                          key={`assessment-panel-${selectedDevice.id}`}
-                          device={selectedDevice}
-                          engineConfig={engineConfig}
-                          actorRole={activeActor.role}
-                          onRunAssessment={handleRunAssessment}
-                          isAssessing={isBusy}
-                        />
+                        <div className="flex flex-wrap items-center gap-2 text-[12px] text-[#9C9C9C]">
+                          <SanitizationBadge
+                            storagePresent={selectedDevice.storagePresent}
+                            status={selectedDevice.sanitizationStatus}
+                            compact
+                          />
+                          <span className="hidden sm:inline">·</span>
+                          <span>
+                            ID: <code className="font-mono">{selectedDevice.id}</code>
+                          </span>
+                        </div>
                       </div>
 
-                      <div className="lg:col-span-5 space-y-6">
+                      {/* Workbench Sub-Tabs Bar */}
+                      <div className="no-print border-t border-[#E8E8EC] bg-[#FAFAFA] px-4 sm:px-6 py-2 flex flex-wrap items-center justify-between gap-2">
+                        <div
+                          role="tablist"
+                          aria-label="Active Device Workbench Views"
+                          className="flex flex-wrap items-center gap-1"
+                        >
+                          {(
+                            [
+                              {
+                                id: 'all',
+                                label: 'All Workbench Panels (Split View)',
+                                icon: Layers,
+                              },
+                              {
+                                id: 'assessment',
+                                label: 'Explainable Assessment & Cost Math',
+                                icon: Calculator,
+                              },
+                              {
+                                id: 'workflow',
+                                label: 'Approval & Sanitization Gate',
+                                icon: ShieldCheck,
+                              },
+                              {
+                                id: 'specs',
+                                label: 'Edit Bench Specs',
+                                icon: Edit3,
+                              },
+                              {
+                                id: 'timeline',
+                                label: `Audit Timeline (${selectedDevice.workflowEvents.length})`,
+                                icon: History,
+                              },
+                            ] as const
+                          ).map((sub) => {
+                            const SubIcon = sub.icon;
+                            const isSubActive = workbenchSubTab === sub.id;
+                            return (
+                              <button
+                                key={sub.id}
+                                type="button"
+                                role="tab"
+                                aria-selected={isSubActive}
+                                onClick={() => setWorkbenchSubTab(sub.id)}
+                                className={cn(
+                                  'inline-flex items-center gap-1.5 rounded-[6px] px-3 py-1.5 text-[12px] font-medium transition-colors cursor-pointer',
+                                  isSubActive
+                                    ? 'bg-[#6366F1] text-[#FFFFFF]'
+                                    : 'text-[#6B6B6B] hover:bg-[#E8E8EC]/70 hover:text-[#0A0A0A]'
+                                )}
+                              >
+                                <SubIcon className="h-3.5 w-3.5" aria-hidden="true" />
+                                {sub.label}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Quick Edit Intake Specs Banner / Form */}
+                    {(workbenchSubTab === 'all' || workbenchSubTab === 'specs') && (
+                      <DeviceIntakeQuickEdit
+                        key={`quick-edit-${selectedDevice.id}-${workbenchSubTab}`}
+                        device={selectedDevice}
+                        actorRole={activeActor.role}
+                        isBusy={isBusy}
+                        defaultOpen={workbenchSubTab === 'specs'}
+                        onSaveAndReassess={handleUpdateIntakeAndReassess}
+                      />
+                    )}
+
+                    {/* Main Workbench Panels */}
+                    {workbenchSubTab === 'all' && (
+                      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                        <div className="lg:col-span-7 space-y-6">
+                          <AssessmentPanel
+                            key={`assessment-panel-${selectedDevice.id}`}
+                            device={selectedDevice}
+                            engineConfig={engineConfig}
+                            actorRole={activeActor.role}
+                            onRunAssessment={handleRunAssessment}
+                            isAssessing={isBusy}
+                          />
+                        </div>
+
+                        <div className="lg:col-span-5 space-y-6">
+                          <WorkflowDecisionControls
+                            device={selectedDevice}
+                            actorRole={activeActor.role}
+                            onTransition={handleTransition}
+                            onVerifySanitization={handleVerifySanitization}
+                            isBusy={isBusy}
+                          />
+                          <WorkflowTimeline events={selectedDevice.workflowEvents} />
+                        </div>
+                      </div>
+                    )}
+
+                    {workbenchSubTab === 'assessment' && (
+                      <AssessmentPanel
+                        key={`assessment-only-${selectedDevice.id}`}
+                        device={selectedDevice}
+                        engineConfig={engineConfig}
+                        actorRole={activeActor.role}
+                        onRunAssessment={handleRunAssessment}
+                        isAssessing={isBusy}
+                      />
+                    )}
+
+                    {workbenchSubTab === 'workflow' && (
+                      <div className="max-w-3xl">
                         <WorkflowDecisionControls
                           device={selectedDevice}
                           actorRole={activeActor.role}
@@ -663,9 +986,14 @@ export function OperationsWorkspace({
                           onVerifySanitization={handleVerifySanitization}
                           isBusy={isBusy}
                         />
+                      </div>
+                    )}
+
+                    {workbenchSubTab === 'timeline' && (
+                      <div className="max-w-3xl">
                         <WorkflowTimeline events={selectedDevice.workflowEvents} />
                       </div>
-                    </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -678,12 +1006,12 @@ export function OperationsWorkspace({
                   engineConfig={engineConfig}
                   isSubmitting={isBusy}
                   onSubmit={handleCreateDevice}
-                  onCancel={() => setActiveTab('inventory')}
+                  onCancel={() => selectTab('inventory')}
                 />
               </div>
             )}
 
-            {/* TAB 3: Scenario Lab, Assumptions & Optional Resend Email Summary */}
+            {/* TAB 3: Scenario Lab, Strategic Matrix & Economic Assumptions */}
             {activeTab === 'scenario' && (
               <div className="space-y-6">
                 <ScenarioLab
@@ -699,7 +1027,49 @@ export function OperationsWorkspace({
               </div>
             )}
 
-            {/* TAB 4: Staff Profile & RBAC Permissions */}
+            {/* TAB 4: Operational Reports, Email Digest & CSV Export */}
+            {activeTab === 'reports' && (
+              <div className="space-y-6">
+                <div className="genesis-card p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                  <div>
+                    <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-[#6366F1] mb-1">
+                      <FileSpreadsheet className="h-3.5 w-3.5" aria-hidden="true" />
+                      Executive Reporting & Export Center
+                    </div>
+                    <h2 className="font-display text-[22px] font-bold text-[#0A0A0A]">
+                      Operational Summary, Non-PII CSV Export & Email Digest
+                    </h2>
+                    <p className="text-[13px] text-[#6B6B6B] mt-1">
+                      Export aggregate queue metrics, trigger allowlisted manager email summaries via Resend, or print a non-PII batch report.
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2 shrink-0">
+                    <CsvExportButton devices={allDevices} isDemo={isDemo} />
+                    <button
+                      type="button"
+                      onClick={() => window.print()}
+                      className="genesis-btn-secondary inline-flex items-center gap-1.5 px-3.5 py-2 text-[12px] cursor-pointer"
+                    >
+                      <Printer className="h-3.5 w-3.5 text-[#6B6B6B]" aria-hidden="true" />
+                      Print Queue Report
+                    </button>
+                  </div>
+                </div>
+
+                <OperationsDashboardOverview
+                  devices={allDevices}
+                  engineConfig={engineConfig}
+                />
+
+                <EmailSummaryPanel
+                  devices={allDevices}
+                  isDemo={isDemo}
+                  actorRole={activeActor.role}
+                />
+              </div>
+            )}
+
+            {/* TAB 5: Staff Profile & RBAC Permissions */}
             {activeTab === 'profile' && (
               <UserProfilePanel
                 actor={activeActor}
@@ -711,7 +1081,7 @@ export function OperationsWorkspace({
               />
             )}
 
-            {/* TAB 5: Admin Panel & System Governance */}
+            {/* TAB 6: Admin Panel & System Governance */}
             {activeTab === 'admin' && (
               <AdminGovernancePanel
                 actor={activeActor}
@@ -723,24 +1093,33 @@ export function OperationsWorkspace({
         )}
       </main>
 
-      {/* Footer with explicit safety and case-alignment disclosures */}
-      <footer className="no-print border-t border-[#E8E8EC] bg-[#FFFFFF] mt-16 py-6 px-6 text-[12px] text-[#6B6B6B]">
-        <div className="max-w-[1280px] mx-auto flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <ShieldCheck className="h-4 w-4 text-[#10B981] shrink-0" aria-hidden="true" />
-            <span>
-              <strong className="text-[#0A0A0A]">Safety & Data Integrity:</strong> ReuseFlow provides decision support only. It never performs certified data wiping or automated device disposal.
-            </span>
+      {/* Footer with Brand Logo, Quick Navigation & Safety Disclosures */}
+      <footer className="no-print border-t border-[#E8E8EC] bg-[#FFFFFF] mt-16 py-8 px-4 sm:px-6 text-[12px] text-[#6B6B6B]">
+        <div className="max-w-[1280px] mx-auto flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div className="space-y-2">
+            <ReuseFlowLogo
+              size="sm"
+              subtitle="Smart Refurbishment Decision Engine · GPL-3.0 Open Source"
+            />
+            <p className="flex items-center gap-2 text-[#6B6B6B] pt-1">
+              <ShieldCheck className="h-4 w-4 text-[#10B981] shrink-0" aria-hidden="true" />
+              <span>
+                <strong className="text-[#0A0A0A]">Safety & Data Integrity:</strong> ReuseFlow provides decision support only. It never performs certified data wiping or automated device disposal.
+              </span>
+            </p>
           </div>
-          <div className="flex flex-wrap items-center gap-4 text-[#6B6B6B]">
-            <Link href="/" className="hover:text-[#6366F1] underline">
+          <div className="flex flex-wrap items-center gap-4 text-[#6B6B6B] font-medium">
+            <Link href="/" className="hover:text-[#6366F1] transition-colors">
               Overview
             </Link>
-            <Link href="/demo" className="hover:text-[#6366F1] underline">
+            <Link href="/demo" className="hover:text-[#6366F1] transition-colors">
               Public Sandbox (/demo)
             </Link>
-            <Link href="/app" className="hover:text-[#6366F1] underline">
+            <Link href="/app" className="hover:text-[#6366F1] transition-colors">
               Staff Workspace (/app)
+            </Link>
+            <Link href="/login" className="hover:text-[#6366F1] transition-colors">
+              One-Click Login (/login)
             </Link>
           </div>
         </div>

@@ -14,16 +14,18 @@ export function DeviceIntakeQuickEdit({
   device,
   actorRole,
   isBusy,
+  defaultOpen = false,
   onSaveAndReassess,
 }: {
   device: Device;
   actorRole: UserRole;
   isBusy: boolean;
+  defaultOpen?: boolean;
   onSaveAndReassess: (
     updates: DeviceUpdateIntakeInput
   ) => Promise<{ ok: boolean; message?: string }>;
 }) {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(defaultOpen);
 
   const [ramGb, setRamGb] = useState<string>(
     device.ramGb !== null ? String(device.ramGb) : ''
@@ -77,8 +79,8 @@ export function DeviceIntakeQuickEdit({
         : ''
     );
     setErrorMsg(null);
-    setIsOpen(false);
-  }, [device]);
+    setIsOpen(defaultOpen);
+  }, [device, defaultOpen]);
 
   const canEdit =
     actorRole === 'manager' ||

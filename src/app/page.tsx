@@ -5,7 +5,6 @@ import {
   Calculator,
   CheckCircle2,
   ClipboardCheck,
-  Cpu,
   FlaskConical,
   HardDrive,
   Lock,
@@ -13,6 +12,7 @@ import {
   ShieldCheck,
   Sliders,
 } from 'lucide-react';
+import { ReuseFlowLogo } from '@/components/shared/reuseflow-logo';
 
 export default function LandingPage() {
   return (
@@ -33,21 +33,47 @@ export default function LandingPage() {
         </div>
       </div>
 
-      {/* Genesis Sticky Top Navigation (56px height, backdrop-blur, 1px border #E8E8EC) */}
-      <header className="sticky top-0 z-20 border-b border-[#E8E8EC] bg-[#FFFFFF]/90 backdrop-blur-md">
-        <div className="max-w-[1280px] mx-auto px-6 h-[56px] flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <span className="inline-flex h-8 w-8 items-center justify-center rounded-[6px] bg-[#0A0A0A] text-[#FAFAFA]">
-              <Cpu className="h-4 w-4" aria-hidden="true" />
-            </span>
-            <div className="flex items-center gap-2">
-              <span className="font-display font-bold text-[18px] tracking-[-0.03em] text-[#0A0A0A]">
-                ReuseFlow
-              </span>
-              <span className="hidden sm:inline-block rounded-[4px] bg-[#FAFAFA] border border-[#E8E8EC] px-2 py-0.5 font-mono text-[11px] text-[#6B6B6B]">
-                v1.0.0
-              </span>
-            </div>
+      {/* Sticky Top Navigation with ReuseFlow Logo & Section Menu */}
+      <header className="sticky top-0 z-20 border-b border-[#E8E8EC] bg-[#FFFFFF]/95 backdrop-blur-md">
+        <div className="max-w-[1280px] mx-auto px-4 sm:px-6 h-[64px] flex items-center justify-between gap-4">
+          <div className="flex items-center gap-6">
+            <Link href="/" className="focus:outline-none">
+              <ReuseFlowLogo
+                size="sm"
+                showVersion
+                subtitle="Refurbishment Decision Engine"
+              />
+            </Link>
+
+            <nav
+              aria-label="Landing Page Sections"
+              className="hidden md:flex items-center gap-1 text-[13px] font-medium text-[#6B6B6B]"
+            >
+              <a
+                href="#workflow-architecture"
+                className="rounded-[6px] px-3 py-1.5 hover:bg-[#F4F4F6] hover:text-[#0A0A0A] transition-colors"
+              >
+                3-Step Workflow
+              </a>
+              <a
+                href="#scenario-guardrails"
+                className="rounded-[6px] px-3 py-1.5 hover:bg-[#F4F4F6] hover:text-[#0A0A0A] transition-colors"
+              >
+                Scenario & Safety Gates
+              </a>
+              <Link
+                href="/demo"
+                className="rounded-[6px] px-3 py-1.5 hover:bg-[#F4F4F6] hover:text-[#0A0A0A] transition-colors"
+              >
+                Public Sandbox (/demo)
+              </Link>
+              <Link
+                href="/login"
+                className="rounded-[6px] px-3 py-1.5 hover:bg-[#F4F4F6] hover:text-[#0A0A0A] transition-colors"
+              >
+                Staff Portal (/app)
+              </Link>
+            </nav>
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3">
@@ -187,7 +213,10 @@ export default function LandingPage() {
         </section>
 
         {/* 3-Step Workflow Section */}
-        <section className="py-12 sm:py-16 px-6 max-w-[1280px] mx-auto space-y-8">
+        <section
+          id="workflow-architecture"
+          className="py-12 sm:py-16 px-6 max-w-[1280px] mx-auto space-y-8"
+        >
           <div className="max-w-2xl space-y-2">
             <p className="text-[11px] font-medium uppercase tracking-wider text-[#9C9C9C]">
               Workflow Architecture
@@ -240,7 +269,10 @@ export default function LandingPage() {
         </section>
 
         {/* Scenario Lab & Integrity Guardrails Callout */}
-        <section className="border-t border-[#E8E8EC] bg-[#FFFFFF] py-12 px-6">
+        <section
+          id="scenario-guardrails"
+          className="border-t border-[#E8E8EC] bg-[#FFFFFF] py-12 px-6"
+        >
           <div className="max-w-[1280px] mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="genesis-panel bg-[#FAFAFA] p-6 space-y-3">
               <div className="flex items-center gap-2 font-display font-bold text-[16px] text-[#0A0A0A]">

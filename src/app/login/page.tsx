@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
   ArrowRight,
-  Cpu,
   FlaskConical,
   KeyRound,
   Lock,
@@ -17,6 +16,7 @@ import {
 } from 'lucide-react';
 import { createSupabaseBrowserClient } from '@/lib/supabase/client';
 import { getSupabasePublicConfig } from '@/lib/supabase/config';
+import { ReuseFlowLogo } from '@/components/shared/reuseflow-logo';
 import { UserRole } from '@/types/domain';
 
 type AuthMode = 'signin' | 'register';
@@ -185,17 +185,34 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-[#FAFAFA] text-[#0A0A0A]">
-      <header className="border-b border-[#E8E8EC] bg-[#FFFFFF]/90 backdrop-blur-md px-6 min-h-[56px] flex items-center">
+      <header className="border-b border-[#E8E8EC] bg-[#FFFFFF]/95 backdrop-blur-md px-4 sm:px-6 min-h-[64px] flex items-center">
         <div className="max-w-[1280px] w-full mx-auto flex items-center justify-between gap-3">
-          <Link
-            href="/"
-            className="flex items-center gap-2.5 font-display font-bold text-[18px] text-[#0A0A0A]"
-          >
-            <span className="inline-flex h-8 w-8 items-center justify-center rounded-[6px] bg-[#0A0A0A] text-[#FAFAFA]">
-              <Cpu className="h-4 w-4" aria-hidden="true" />
-            </span>
-            <span>ReuseFlow</span>
-          </Link>
+          <div className="flex items-center gap-6">
+            <Link href="/" className="focus:outline-none">
+              <ReuseFlowLogo
+                size="sm"
+                showVersion
+                subtitle="Staff Authentication & Role Governance"
+              />
+            </Link>
+            <nav
+              aria-label="Auth Navigation"
+              className="hidden md:flex items-center gap-1 text-[13px] font-medium text-[#6B6B6B]"
+            >
+              <Link
+                href="/"
+                className="rounded-[6px] px-3 py-1.5 hover:bg-[#F4F4F6] hover:text-[#0A0A0A] transition-colors"
+              >
+                Overview
+              </Link>
+              <Link
+                href="/demo"
+                className="rounded-[6px] px-3 py-1.5 hover:bg-[#F4F4F6] hover:text-[#0A0A0A] transition-colors"
+              >
+                Public Sandbox (/demo)
+              </Link>
+            </nav>
+          </div>
           <Link
             href="/demo"
             className="genesis-btn-secondary inline-flex items-center gap-1.5 px-3.5 py-2 min-h-[40px] text-[13px]"
