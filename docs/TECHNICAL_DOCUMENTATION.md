@@ -4,6 +4,12 @@
   <img src="../public/TechnicalStack.png" alt="ReuseFlow Layered Technical Stack" width="100%" />
 </p>
 
+<p align="center">
+  <a href="https://reuseflow.vercel.app"><strong>Live Production App</strong></a> ·
+  <a href="https://reuseflow.vercel.app/demo"><strong>Zero-Login Judge Sandbox (/demo)</strong></a> ·
+  <a href="https://youtu.be/TsD79yBawuQ"><strong>Watch 2-Min Demo Video (YouTube)</strong></a>
+</p>
+
 > [!IMPORTANT]
 > **Scope, Safety & Claim Discipline:** ReuseFlow is an open-source (`GPL-3.0`) hackathon MVP proposing a standardized refurbishment triage and decision-support workflow. It is **not** an official operational system of Free Geek, **never** performs certified device data wiping or automated hardware disposal, and requires **human supervisor approval** for all disposition and sanitization gates. Financial thresholds in Engine `v1.0.0` and Scenario Lab are transparent, editable hypotheses rather than industry standards.
 

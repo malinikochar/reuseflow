@@ -1,5 +1,7 @@
 # ReuseFlow Demo Recording Script — 7:20 Storyboard (Under 8:00 Cap)
 
+**Published 2-Minute Product Demo Video:** [https://youtu.be/TsD79yBawuQ](https://youtu.be/TsD79yBawuQ)  
+
 **Target total duration:** ~7 minutes 20 seconds (strictly under the 8:00 official limit).  
 **Pre-recording requirement:** Ensure an eligible team member has verified [`docs/CASE_ALIGNMENT.md`](CASE_ALIGNMENT.md) against the official FUSE Society Blueprint 2026 case packet.
 

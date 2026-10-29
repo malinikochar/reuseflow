@@ -12,6 +12,7 @@
 <p align="center">
   <a href="https://reuseflow.vercel.app"><img src="https://img.shields.io/badge/Live_App-reuseflow.vercel.app-4F46E5?style=for-the-badge&logo=vercel&logoColor=white" alt="Live Production App" /></a>
   <a href="https://reuseflow.vercel.app/demo"><img src="https://img.shields.io/badge/Zero--Login_Judge_Sandbox-%2Fdemo-10B981?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Public Judge Sandbox" /></a>
+  <a href="https://youtu.be/TsD79yBawuQ"><img src="https://img.shields.io/badge/Watch_2--Min_Demo-YouTube-FF0000?style=for-the-badge&logo=youtube&logoColor=white" alt="Watch 2-Minute Demo Video" /></a>
   <a href="https://reuseflow.vercel.app/login"><img src="https://img.shields.io/badge/Staff_Workspace-%2Flogin-0F172A?style=for-the-badge&logo=supabase&logoColor=3ECF8E" alt="Staff Login Portal" /></a>
 </p>
 
@@ -25,6 +26,7 @@
 </p>
 
 <p align="center">
+  <a href="#product-demo-video-2-minute-walkthrough">Demo Video</a> ·
   <a href="#1-how-reuseflow-works">Workflow</a> ·
   <a href="#2-public-judge-sandbox-demo">Judge Sandbox</a> ·
   <a href="#3-inventory--explainable-triage-engine-v100">Triage Engine</a> ·
@@ -56,6 +58,30 @@ Nonprofit hardware reuse and digital inclusion organizations process mixed palle
 - **Deterministic Integer-Cents Rule Engine (`v1.0.0`):** Pure, versioned scoring returning transparent reason codes (`VIABLE_COST_AND_FUNCTION`, `SAFETY_BATTERY_SWOLLEN`, `LOW_RAM`, `BELOW_MARGIN_THRESHOLD`, `SANITIZATION_GATE_PENDING`) and a non-destructive **"What-If?"** parts cost simulator.
 - **Hard Safety & Sanitization Gates:** Swollen batteries trigger immediate `QUARANTINE` *before* any economic calculation. Storage-bearing devices are locked from reaching `ready` or `closed` until a manager records human verification of an external sanitization procedure.
 - **Advisory AI & Live Web Research Copilot:** Integrates **Tavily Search API** + **Nebius TokenFactory LLM** to surface cited secondary-market comparable prices and teardown notes while preserving strict human confirmation before updating `v1.0.0` inputs.
+
+---
+
+## Product Demo Video (2-Minute Walkthrough)
+
+<div align="center">
+  <a href="https://youtu.be/TsD79yBawuQ">
+    <img src="https://img.youtube.com/vi/TsD79yBawuQ/maxresdefault.jpg" alt="Watch the ReuseFlow 2-Minute Product Demo on YouTube" width="88%" />
+  </a>
+  <p>
+    <br />
+    <a href="https://youtu.be/TsD79yBawuQ"><strong>&#9654; Watch the Full 2-Minute Product Demo Video on YouTube (https://youtu.be/TsD79yBawuQ)</strong></a>
+  </p>
+</div>
+
+| Timestamp | Chapter | Highlights |
+| :--- | :--- | :--- |
+| **`0:00`** | **Problem Statement** | Hardware donation intake bottlenecks, manual margin guesswork, and physical/data safety risks |
+| **`0:21`** | **The ReuseFlow Idea** | Standardized 90-second bench triage paired with deterministic unit-economics and human gates |
+| **`0:40`** | **Device Intake & Engine `v1.0.0`** | Live `FG-DEMO-208` intake, integer-cents cost/margin breakdown, and non-destructive What-If simulator |
+| **`1:00`** | **AI & Live Web Copilot** | Resolving missing market comps (`FG-DEMO-105`) with cited Tavily search + Nebius TokenFactory synthesis |
+| **`1:15`** | **Safety & Sanitization Gates** | Pre-economic swollen battery `QUARANTINE` (`FG-DEMO-103`) and human-verified external wipe assertions (`FG-DEMO-106`) |
+| **`1:31`** | **Scenario Lab & Live Auth** | Interactive monthly capacity modeling and one-click staff login into RLS-protected Supabase `/app` |
+| **`1:49`** | **Circular Impact** | Turning donated hardware into safe, auditable, community-ready digital access |
 
 ---
 
