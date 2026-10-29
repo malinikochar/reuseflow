@@ -3,11 +3,14 @@
   "version": "1.0.0",
   "private": true,
   "license": "GPL-3.0-only",
-  "author": "Ritesh Kochar <ensure01@gmail.com>",
+  "author": "Malini Kochar <malinikochar@gmail.com>",
   "contributors": [
-    "Ritesh Kochar <ensure01@gmail.com>",
     "Malini Kochar <malinikochar@gmail.com>"
   ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/malinikochar/reuseflow.git"
+  },
   "description": "ReuseFlow — Smart Refurbishment Decision Engine (FUSE Society Blueprint 2026 MVP)",
   "scripts": {
     "dev": "next dev",

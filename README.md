@@ -6,8 +6,8 @@
 - **Live Production URL:** [https://reuseflow.vercel.app](https://reuseflow.vercel.app)
 - **Public Judge Sandbox (Zero Login):** [https://reuseflow.vercel.app/demo](https://reuseflow.vercel.app/demo)
 - **Staff & One-Click Hackathon Demo Login (`/app`):** [https://reuseflow.vercel.app/login](https://reuseflow.vercel.app/login)
-- **GitHub Repository:** [https://github.com/ensuredesign/reuseflow](https://github.com/ensuredesign/reuseflow)
-- **Authors / Contributors:** Ritesh Kochar (`ensure01@gmail.com`) & Malini Kochar (`malinikochar@gmail.com`)
+- **GitHub Repository:** [https://github.com/malinikochar/reuseflow](https://github.com/malinikochar/reuseflow)
+- **Author:** Malini Kochar (`malinikochar@gmail.com`)
 - **Open Source License:** [GNU General Public License v3.0 (`GPL-3.0`)](LICENSE)
 
 > **Important Scope & Honesty Disclosure:** ReuseFlow is a working hackathon prototype for a *proposed* internal electronics refurbishment triage workflow. It is **not** an official or endorsed operational system of Free Geek, does **not** perform certified data wiping or automated device disposal, and all sample data in `/demo` are 100% synthetic with zero personal donor/recipient information or real serial numbers. Case-specific alignment in [`docs/CASE_ALIGNMENT.md`](docs/CASE_ALIGNMENT.md) must be validated by an eligible participant against the restricted competitor packet before final presentation recording.
